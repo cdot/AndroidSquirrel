@@ -1,0 +1,21 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="310"
+    android:viewportHeight="310">
+    <path
+        android:pathData="m45.94,6.429c0,0 71.094,65.372 71.168,115.932 0.047,31.788 -41.538,51.377 -36.197,93.968 2.968,23.665 28.717,61.27 28.717,61.27 0,0 -16.516,-39.858 -13.447,-67.965 2.719,-24.898 10.635,-53.959 29.115,-67.532 17.097,-12.558 57.429,4.819 72.787,-10.39 19.574,-19.384 41.853,-81.039 41.853,-81.039l6.369,42.597c0,0 20.492,9.953 28.205,18.701 9.743,11.05 20.926,40.519 20.926,40.519 0,0 -28.405,6.532 -41.853,12.468 -6.706,2.96 -18.646,3.235 -19.107,11.429 3.898,18.011 29.327,22.049 43.59,23.42 0,0 -24.316,27.604 -52.792,26.84 -13.344,-0.358 -23.76,-0.029 -23.76,-0.029 0,0 11.05,14.539 7.988,26.738 -3.179,12.662 -8.937,26.226 17.288,50.135 -14.057,-0.93 -26.179,0.081 -26.179,0.081L99.62,303.572c0,0 -85.419,-42.493 -90.984,-87.273C3.199,172.553 38.588,137.964 44.127,94.235c4.367,-34.474 1.813,-87.807 1.813,-87.807z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="80"
+                android:centerY="100"
+                android:gradientRadius="250"
+                android:startColor="#f3843e"
+                android:endColor="#393939"
+                android:type="radial">
+                <!-- See https://stackoverflow.com/questions/13929877/how-to-make-gradient-background-in-android -->
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>
