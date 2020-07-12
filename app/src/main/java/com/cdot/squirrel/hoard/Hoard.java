@@ -1,5 +1,7 @@
 package com.cdot.squirrel.hoard;
 
+import com.cdot.squirrel.ui.R;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -48,7 +50,7 @@ public class Hoard {
     // History of Event reflecting actions played into this hoard since it was created
     Stack<Event> history;
 
-    // The root of the tree representation of the hoard
+    // The toolbar of the tree representation of the hoard
     private Fork tree;
 
     /**
@@ -56,7 +58,7 @@ public class Hoard {
      */
     public Hoard() {
         history = new Stack<>();
-        tree = new Fork((String) null); // root node
+        tree = new Fork((String) null); // toolbar node
     }
 
     /**
@@ -72,9 +74,9 @@ public class Hoard {
     }
 
     /**
-     * Get the root node of the tree in the hoard
+     * Get the toolbar node of the tree in the hoard
      *
-     * @return the tree root
+     * @return the tree toolbar
      */
     public Fork getRoot() {
         return tree;
@@ -115,6 +117,14 @@ public class Hoard {
      */
     private void recordEvent(Action redo, Action undo) {
         history.add(new Event(redo, undo));
+    }
+
+    /**
+     * Does the hoard require a save?
+     * @return true if a save is needed
+     */
+    public boolean requiresSave() {
+        return history.size() > 0;
     }
 
     /**
@@ -366,7 +376,7 @@ public class Hoard {
     /**
      * Return the tree node identified by the path.
      *
-     * @param path array of path elements, root first
+     * @param path array of path elements, toolbar first
      * @return a tree node, or null if not found.
      */
     public HoardNode getNode(HPath path) {

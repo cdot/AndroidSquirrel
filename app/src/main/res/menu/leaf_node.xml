@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_add_alarm"
+        android:title="@string/add_alarm"
+        android:icon="@drawable/ic_alarm"
+        android:orderInCategory="10" />
+    <item
+        android:id="@+id/action_copy"
+        android:title="@string/copy_value"
+        android:icon="@drawable/ic_copy"
+        android:orderInCategory="20" />
+    <item
+        android:id="@+id/action_delete"
+        android:title="@string/delete"
+        android:icon="@drawable/ic_delete"
+        android:orderInCategory="30" />
+    <item
+        android:id="@+id/action_edit"
+        android:title="@string/edit_value"
+        android:icon="@drawable/ic_edit"
+        android:orderInCategory="40" />
+    <item
+        android:id="@+id/action_pick"
+        android:title="@string/pick_characters"
+        android:icon="@drawable/ic_pick"
+        android:orderInCategory="50" />
+    <item
+        android:id="@+id/action_randomise"
+        android:title="@string/randomise_value"
+        android:icon="@drawable/ic_randomise"
+        android:orderInCategory="60" />
+    <item
+        android:id="@+id/action_rename"
+        android:title="@string/rename"
+        android:orderInCategory="70" />
+</menu>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="2dp"
+    android:layout_marginEnd="2dp"
+    android:orientation="vertical"
+    android:paddingStart="2dp"
+    android:paddingEnd="2dp">
+
+    <TextView
+        android:id="@+id/pick_index"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/pick_box"
+        android:fontFamily="monospace"
+        android:text="00"
+        android:textAlignment="center"></TextView>
+
+    <TextView
+        android:id="@+id/pick_char"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/pick_box"
+        android:fontFamily="monospace"
+        android:text="00"
+        android:textAlignment="center"></TextView>
+</LinearLayout>

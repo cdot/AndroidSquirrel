@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/search"
+        android:icon="@drawable/ic_search_black_24dp"
+        android:orderInCategory="10"
+        app:showAsAction="always"
+        android:title="@string/search"
+        app:actionViewClass="android.widget.SearchView" />
+    <item
+        android:id="@+id/undo"
+        android:title="@string/undo"
+        android:icon="@drawable/ic_undo"
+        android:orderInCategory="20"
+        app:showAsAction="always"  />
+    <item
+        android:id="@+id/save"
+        android:title="@string/save"
+        android:icon="@drawable/ic_save"
+        android:orderInCategory="30"
+        app:showAsAction="ifRoom"  />
+    <item
+        android:id="@+id/settings"
+        android:title="@string/settings"
+        android:icon="@drawable/ic_settings"
+        android:orderInCategory="40"
+        app:showAsAction="ifRoom"  />
+    <item
+        android:id="@+id/help"
+        android:title="@string/help"
+        android:icon="@drawable/ic_help"
+        android:orderInCategory="50"
+        app:showAsAction="ifRoom"  />
+</menu>

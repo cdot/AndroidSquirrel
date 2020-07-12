@@ -23,6 +23,7 @@ public abstract class HoardNode implements JSONable {
     long time = System.currentTimeMillis();
     String name = null;
     Alarm alarm;
+    public boolean isOpen = false;
 
     HoardNode(String name) {
         this.name = name;
@@ -30,6 +31,10 @@ public abstract class HoardNode implements JSONable {
 
     public String getName() {
         return name;
+    }
+
+    public Alarm getAlarm() {
+        return alarm;
     }
 
     /**
