@@ -1,37 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/action_add_alarm"
-        android:title="@string/add_alarm"
-        android:icon="@drawable/ic_alarm"
+        android:id="@+id/action_pick"
+        android:title="@string/Pick_Characters"
+        android:orderInCategory="50" />
+    <item
+        android:id="@+id/action_alarm"
+        android:title="@string/Edit_Alarm"
         android:orderInCategory="10" />
     <item
+        android:id="@+id/action_constrain"
+        android:title="@string/Edit_Constraints"
+        android:orderInCategory="40" />
+    <item
         android:id="@+id/action_copy"
-        android:title="@string/copy_value"
-        android:icon="@drawable/ic_copy"
+        android:title="@string/Copy_Value"
         android:orderInCategory="20" />
     <item
         android:id="@+id/action_delete"
-        android:title="@string/delete"
-        android:icon="@drawable/ic_delete"
+        android:title="@string/Delete"
         android:orderInCategory="30" />
     <item
         android:id="@+id/action_edit"
-        android:title="@string/edit_value"
-        android:icon="@drawable/ic_edit"
+        android:title="@string/Edit"
         android:orderInCategory="40" />
     <item
-        android:id="@+id/action_pick"
-        android:title="@string/pick_characters"
-        android:icon="@drawable/ic_pick"
-        android:orderInCategory="50" />
-    <item
         android:id="@+id/action_randomise"
-        android:title="@string/randomise_value"
-        android:icon="@drawable/ic_randomise"
+        android:title="@string/Randomise_Value"
         android:orderInCategory="60" />
-    <item
-        android:id="@+id/action_rename"
-        android:title="@string/rename"
-        android:orderInCategory="70" />
 </menu>

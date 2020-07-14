@@ -18,13 +18,13 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     // AppCompatActivity is a subclass of androidx.fragment.app.FragmentActivity
-
+    private static final String TAG = "MainActivity";
     private Hoard mHoard;
 
     final static long HOUR = 60 * 60 * 1000;
 
     Action[] test_actiona = new Action[]{
-            new Action(Action.NEW, new HPath("FineDining"), 1 * HOUR),
+            new Action(Action.NEW, new HPath("FineDining"), HOUR),
             new Action(Action.SET_ALARM, new HPath("FineDining"), 3 * HOUR / 2, "{\"due\":1,\"repeat\":1000000}"),
             new Action(Action.NEW, new HPath("FineDining↘Caviar"), 2 * HOUR),
             new Action(Action.NEW, new HPath("FineDining↘Caviar↘Salmon"), 3 * HOUR, "Orange Eggs"),

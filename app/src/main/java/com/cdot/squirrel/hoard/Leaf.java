@@ -8,8 +8,8 @@ import java.util.List;
 
 public class Leaf extends HoardNode {
     // String data associated with this node
-    private String data;
-    Constraints constraints;
+    private String mData;
+    private Constraints mConstraints;
 
     /**
      * Construct from a JSON object
@@ -30,7 +30,7 @@ public class Leaf extends HoardNode {
      */
     Leaf(String name, String data) {
         super(name);
-        this.data = data;
+        mData = data;
     }
 
     /**
@@ -38,7 +38,15 @@ public class Leaf extends HoardNode {
      * @return null if there is no data
      */
     public String getData() {
-        return data;
+        return mData;
+    }
+
+    public Constraints getConstraints() {
+        return mConstraints;
+    }
+
+    public void setConstraints(Constraints cons) {
+        mConstraints = cons;
     }
 
     /**
@@ -46,15 +54,21 @@ public class Leaf extends HoardNode {
      * @param data null to erase data
      */
     public void setData(String data) {
-        this.data = data;
+        this.mData = data;
+    }
+
+    public boolean meetsConstraints() {
+        if (mConstraints == null)
+            return true;
+        return mConstraints.isAcceptable(mData);
     }
 
     @Override
     protected List<Action> actionsToCreate(HPath path) {
         List<Action> actions = new ArrayList<>();
-        actions.add(new Action(Action.NEW, path.append(name), time, data));
-        if (constraints != null)
-            actions.addAll(constraints.actionsToCreate(path));
+        actions.add(new Action(Action.NEW, path.with(name), time, mData));
+        if (mConstraints != null)
+            actions.addAll(mConstraints.actionsToCreate(path));
         actions.addAll(super.actionsToCreate(path));
         return actions;
     }
@@ -62,16 +76,16 @@ public class Leaf extends HoardNode {
     @Override
     public String toString(int tab) {
         String tabs = (tab == 0) ? "" : String.format("%1$" + tab + "s", "");
-        return tabs + name + ": '" + data + "' " + time + (tab > 0 ? "\n" : "");
+        return tabs + name + ": '" + mData + "' " + time + (tab > 0 ? "\n" : "");
     }
 
     @Override
     public JSONObject toJSON() {
         JSONObject job = super.toJSON();
         try {
-            job.put("data", data);
-            if (constraints != null) {
-                job.put("constraints", constraints.toJSON());
+            job.put("data", mData);
+            if (mConstraints != null) {
+                job.put("constraints", mConstraints.toJSON());
             }
         } catch (JSONException ignore) {
         }
@@ -81,9 +95,9 @@ public class Leaf extends HoardNode {
     @Override
     public void fromJSON(JSONObject job) throws JSONException {
         super.fromJSON(job);
-        data = job.getString("data");
+        mData = job.getString("data");
         if (job.has("constraints"))
-            constraints = new Constraints(job.getJSONObject("constraints"));
+            mConstraints = new Constraints(job.getJSONObject("constraints"));
     }
 
     @Override
@@ -93,8 +107,8 @@ public class Leaf extends HoardNode {
             return;
         }
         Leaf lb = (Leaf) b;
-        if (!lb.data.equals(data))
-            differ.difference(new Action(Action.EDIT, path, lb.data), this, b);
+        if (!lb.mData.equals(mData))
+            differ.difference(new Action(Action.EDIT, path, lb.mData), this, b);
         super.diff(path, b, differ);
     }
 }

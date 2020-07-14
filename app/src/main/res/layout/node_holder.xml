@@ -16,7 +16,7 @@
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:backgroundTint="?android:attr/panelBackground"
-        android:src="@drawable/ic_folder_open" />
+        android:src="@drawable/ic_folder_closed" />
 
     <TextView
         android:id="@+id/node_name"
@@ -30,13 +30,15 @@
 
     <TextView
         android:id="@+id/node_value"
-        android:textSize="16sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
         android:layout_marginStart="5sp"
         android:layout_marginEnd="5sp"
-        android:layout_centerVertical="true"
         android:layout_toEndOf="@+id/node_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:fontFamily="monospace"
+        android:textSize="16sp"
+        android:typeface="serif" />
 
     <ImageButton
         android:id="@+id/alarm"

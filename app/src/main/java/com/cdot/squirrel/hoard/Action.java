@@ -3,6 +3,7 @@ package com.cdot.squirrel.hoard;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,11 +22,11 @@ public class Action implements JSONable {
     public static final char CANCEL_ALARM = 'C';
     public static final char CONSTRAIN = 'X';
 
-    HPath path;
-    char type;
-    long time;
-    static final long NO_TIME = 0;
-    String data; // Data is always stringified
+    public HPath path;
+    public char type;
+    public long time;
+    public static final long NO_TIME = 0;
+    public String data; // Data is always stringified
 
     /**
      * Copy constructor
@@ -154,7 +155,7 @@ public class Action implements JSONable {
      * @return {string} human readable description of action
      */
     public String toString() {
-        SimpleDateFormat f = new SimpleDateFormat();
+        DateFormat f = DateFormat.getDateTimeInstance();
         return this.type + ": " + path + " @" + f.format(new Date(time)) + ((data != null) ? " " + data : "");
     }
 

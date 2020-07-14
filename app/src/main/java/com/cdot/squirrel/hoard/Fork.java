@@ -5,7 +5,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.SortedMap;
 import java.util.Iterator;
 import java.util.List;
@@ -74,6 +73,18 @@ public class Fork extends HoardNode {
         return node;
     }
 
+    @Override // HoardNode
+    public HPath getPath(HoardNode find, HPath pathHere) {
+        if (this == find)
+            return pathHere;
+        for (HoardNode child : branches.values()) {
+            HPath found = child.getPath(find, pathHere.with(child.name));
+            if (found != null)
+                return found;
+        }
+        return null;
+    }
+
     /**
      * Add a new child to the end of the branches of this node
      *
@@ -96,7 +107,7 @@ public class Fork extends HoardNode {
     protected List<Action> actionsToCreate(HPath path) {
         List<Action> actions = new ArrayList<>();
         if (name != null) {
-            path = path.append(name);
+            path = path.with(name);
             actions.add(new Action(Action.NEW, path, time));
         }
         for (HoardNode child : branches.values()) {
@@ -159,7 +170,7 @@ public class Fork extends HoardNode {
         List<HPath> matched = new ArrayList<>();
         Fork fb = (Fork) b;
         for (HoardNode subnode : branches.values()) {
-            HPath subpath = path.append(subnode.name);
+            HPath subpath = path.with(subnode.name);
             HoardNode fbSubnode =fb.getChildByName(subnode.name);
             if (fbSubnode != null) {
                 matched.add(subpath);
@@ -170,7 +181,7 @@ public class Fork extends HoardNode {
             }
         }
         for (HoardNode subnode : fb.branches.values()) {
-            HPath subpath = path.append(subnode.name);
+            HPath subpath = path.with(subnode.name);
             if (matched.indexOf(subpath) < 0) {
                 // HoardNode in b is new
                 if (subnode instanceof Fork)
@@ -200,7 +211,7 @@ public class Fork extends HoardNode {
     void checkAlarms(HPath path, long now, Alarm.Ringer ring) {
         super.checkAlarms(path, now, ring);
         for (HoardNode c : branches.values()) {
-            c.checkAlarms(path.append(c.name), now, ring);
+            c.checkAlarms(path.with(c.name), now, ring);
         }
     }
 }

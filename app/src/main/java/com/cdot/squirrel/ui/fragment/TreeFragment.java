@@ -16,6 +16,7 @@ import android.widget.SearchView;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.cdot.squirrel.hoard.Action;
 import com.cdot.squirrel.hoard.Fork;
 import com.cdot.squirrel.hoard.Hoard;
 import com.cdot.squirrel.hoard.HoardNode;
@@ -29,11 +30,12 @@ import com.unnamed.b.atv.view.AndroidTreeView;
 /**
  * Container for tree nodes
  */
-public class TreeFragment extends Fragment {
+public class TreeFragment extends Fragment implements Hoard.ChangeListener{
     private static final String TAG = "TreeFragment";
 
     private AndroidTreeView mTreeView;
     private Hoard mHoard;
+    private TreeNode mTreeRoot;
 
     @Override // Fragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -44,12 +46,15 @@ public class TreeFragment extends Fragment {
 
         setHasOptionsMenu(true);
 
+        mTreeRoot = TreeNode.root();
         MainActivity act = (MainActivity) getActivity();
-        TreeNode root = TreeNode.root();
         mHoard = act.getHoard();
-        populateTree(root, (Fork)mHoard.getRoot());
-        root.setViewHolder(new NodeHolder(getActivity()));
-        mTreeView = new AndroidTreeView(getActivity(), root)
+        mHoard.addChangeListener(this);
+        populateTree(mTreeRoot, (Fork)mHoard.getRoot());
+
+        NodeHolder.sHoard = mHoard;
+        mTreeRoot.setViewHolder(new NodeHolder(getActivity()));
+        mTreeView = new AndroidTreeView(getActivity(), mTreeRoot)
                 .setDefaultAnimation(true)
                 .setUse2dScroll(true)
                 .setDefaultContainerStyle(R.style.TreeNodeStyleCustom)
@@ -114,7 +119,8 @@ public class TreeFragment extends Fragment {
                 // Switch to settings fragment
                 fragment = new SettingsFragment();
                 ftx = getActivity().getSupportFragmentManager().beginTransaction();
-                ftx.replace(R.id.fragment, fragment, SettingsFragment.class.getName());
+                ftx.hide(this);
+                ftx.add(R.id.fragment, fragment, SettingsFragment.class.getName());
                 ftx.addToBackStack(null);
                 ftx.commit();
                 return true;
@@ -122,7 +128,8 @@ public class TreeFragment extends Fragment {
                 // Switch to help fragment, main page
                 fragment = new HelpFragment("main");
                 ftx = getActivity().getSupportFragmentManager().beginTransaction();
-                ftx.replace(R.id.fragment, fragment, HelpFragment.class.getName());
+                ftx.hide(this);
+                ftx.add(R.id.fragment, fragment, HelpFragment.class.getName());
                 ftx.addToBackStack(null);
                 ftx.commit();
                 return true;
@@ -155,5 +162,42 @@ public class TreeFragment extends Fragment {
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString("tState", mTreeView.getSaveState());
+    }
+
+    private TreeNode findTreeNode(TreeNode tnode, HoardNode n) {
+        if (tnode.getValue() == n)
+            return tnode;
+        for (TreeNode tkid : tnode.getChildren()) {
+            TreeNode found = findTreeNode(tkid, n);
+            if (found != null)
+                return found;
+        }
+        return null;
+    }
+
+    @Override // implements Hoard.ChangeListener
+    public void actionPlayed(Action act) {
+        TreeNode tn1, tn2;
+        switch (act.type) {
+            case Action.NEW:
+                tn1 = findTreeNode(mTreeRoot, mHoard.getNode(act.path.parent()));
+                tn2 = new TreeNode(mHoard.getNode(act.path));
+                tn1.addChild(tn2);
+                mTreeView.addNode(tn1, tn2);
+                break;
+            case Action.SET_ALARM:
+            case Action.CONSTRAIN:
+            case Action.EDIT:
+                tn1 = findTreeNode(mTreeRoot, mHoard.getNode(act.path));
+                ((NodeHolder)tn1.getViewHolder()).updateView();
+                break;
+            case Action.RENAME:
+                tn1 = findTreeNode(mTreeRoot, mHoard.getNode(act.path.parent().with(act.data)));
+                ((NodeHolder)tn1.getViewHolder()).updateView();
+                break;
+
+            default:
+                throw new Error("Unsupported action " + act);
+        }
     }
 }

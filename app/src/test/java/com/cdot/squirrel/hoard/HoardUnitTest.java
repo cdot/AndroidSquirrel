@@ -588,14 +588,14 @@ public class HoardUnitTest {
         assertNotNull(trouffe);
         assertTrue(trouffe instanceof Leaf);
         Leaf fungi = (Leaf) trouffe;
-        assertNotNull(fungi.constraints);
-        assertEquals(10, fungi.constraints.size);
-        assertEquals("a-fA-F0-9", fungi.constraints.chars);
-        assertTrue(fungi.constraints.isAcceptable("abcdefABCDEF0123456789"));
-        assertFalse(fungi.constraints.isAcceptable("abcdefAB"));
-        assertFalse(fungi.constraints.isAcceptable(""));
-        assertFalse(fungi.constraints.isAcceptable(null));
-        assertFalse(fungi.constraints.isAcceptable("abcdxfABCDEF0123456789"));
+        assertNotNull(fungi.getConstraints());
+        assertEquals(10, fungi.getConstraints().length);
+        assertEquals("a-fA-F0-9", fungi.getConstraints().characters);
+        assertTrue(fungi.getConstraints().isAcceptable("abcdefABCDEF0123456789"));
+        assertFalse(fungi.getConstraints().isAcceptable("abcdefAB"));
+        assertFalse(fungi.getConstraints().isAcceptable(""));
+        assertFalse(fungi.getConstraints().isAcceptable(null));
+        assertFalse(fungi.getConstraints().isAcceptable("abcdxfABCDEF0123456789"));
         assertEquals("[N: Truffles @01/01/70 01:00 Fungi, X:  @01/01/70 01:00 {\"size\":10,\"chars\":\"a-fA-F0-9\"}]", fungi.actionsToCreate().toString());
         try {
             h.undo();
@@ -606,7 +606,7 @@ public class HoardUnitTest {
         assertNotNull(trouffe);
         assertTrue(trouffe instanceof Leaf);
         fungi = (Leaf) trouffe;
-        assertNull(fungi.constraints);
+        assertNull(fungi.getConstraints());
     }
 
     @Test
@@ -625,9 +625,9 @@ public class HoardUnitTest {
         assertNotNull(trouffe);
         assertTrue(trouffe instanceof Leaf);
         Leaf fungi = (Leaf) trouffe;
-        assertNotNull(fungi.constraints);
-        assertEquals(30, fungi.constraints.size);
-        assertEquals("A-Za-z0-9!%^&*_$+-=;:@#~,./?", fungi.constraints.chars);
+        assertNotNull(fungi.getConstraints());
+        assertEquals(30, fungi.getConstraints().length);
+        assertEquals("A-Za-z0-9!%^&*_$+-=;:@#~,./?", fungi.getConstraints().characters);
         try {
             h.undo();
         } catch (Hoard.ConflictException ce) {
@@ -637,7 +637,7 @@ public class HoardUnitTest {
         assertNotNull(trouffe);
         assertTrue(trouffe instanceof Leaf);
         fungi = (Leaf) trouffe;
-        assertNull(fungi.constraints);
+        assertNull(fungi.getConstraints());
     }
 
     @Test
@@ -652,9 +652,9 @@ public class HoardUnitTest {
         HoardNode n = h.getNode(new HPath("FineDining↘Caviar"));
         assertNotNull(n);
         assertTrue(n instanceof Fork);
-        assertNotNull(n.alarm);
-        assertEquals(1, n.alarm.due);
-        assertEquals(1000000, n.alarm.repeat);
+        assertNotNull(n.mAlarm);
+        assertEquals(1, n.mAlarm.due);
+        assertEquals(1000000, n.mAlarm.repeat);
 
         // A set alarm with no alarm data means clear the alarm
         act = new Action(Action.SET_ALARM, new HPath("FineDining↘Caviar"));
@@ -664,7 +664,7 @@ public class HoardUnitTest {
             fail(ce.getMessage());
         }
         n = h.getNode(new HPath("FineDining↘Caviar"));
-        assertNull(n.alarm);
+        assertNull(n.mAlarm);
 
         try {
             h.undo();
@@ -672,9 +672,9 @@ public class HoardUnitTest {
             fail(ce.getMessage());
         }
         n = h.getNode(new HPath("FineDining↘Caviar"));
-                assertNotNull(n.alarm);
-        assertEquals(1, n.alarm.due);
-        assertEquals(1000000, n.alarm.repeat);
+                assertNotNull(n.mAlarm);
+        assertEquals(1, n.mAlarm.due);
+        assertEquals(1000000, n.mAlarm.repeat);
         assertEquals("[N: Caviar @01/01/70 05:00, N: Caviar↘Salmon @01/01/70 04:00 Orange Eggs, A: Caviar @01/01/70 01:00 {\"due\":1,\"repeat\":1000000}]", n.actionsToCreate().toString());
 
         try {
@@ -684,7 +684,7 @@ public class HoardUnitTest {
         }
         n = h.getNode(new HPath("FineDining↘Caviar"));
 
-        assertNull(n.alarm);
+        assertNull(n.mAlarm);
     }
 
     @Test

@@ -1,41 +1,51 @@
 package com.cdot.squirrel.ui.fragment;
 
-import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
+import android.view.ViewParent;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 
-import com.cdot.squirrel.hoard.HoardNode;
 import com.cdot.squirrel.hoard.Leaf;
-import com.cdot.squirrel.ui.databinding.NodeHolderBinding;
 import com.cdot.squirrel.ui.databinding.PickFragmentBinding;
 import com.cdot.squirrel.ui.databinding.PickHolderBinding;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PickFragment extends Fragment {
+/**
+ * Pick 'pseudo-dialog'
+ */
+public class PickFragment extends Fragment implements View.OnClickListener {
     Leaf mNode;
 
     private LinearLayout getPickHolder(int i, char c) {
         final LayoutInflater inflater = LayoutInflater.from(getContext());
         PickHolderBinding binding = PickHolderBinding.inflate(inflater, null, false);
-        binding.pickIndex.setText("" + i);
-        binding.pickChar.setText("" + c);
+        binding.pickIndex.setText(Integer.toString(i));
+        binding.pickIndex.setOnClickListener(this);
+        binding.pickChar.setText(Character.toString(c));
+        binding.pickChar.setOnClickListener(this);
         return binding.getRoot();
     }
 
     public PickFragment(Leaf node) {
         mNode = node;
+    }
+
+    @Override // View.OnClickListener
+    public void onClick(View v) {
+        LinearLayout parent = (LinearLayout)v.getParent();
+        parent.setSelected(!parent.isSelected());
+        for (int i = 0; i < parent.getChildCount(); i++) {
+            Button b = (Button) parent.getChildAt(i);
+            b.setSelected(!b.isSelected());
+        }
     }
 
     @Override // Fragment
@@ -55,8 +65,9 @@ public class PickFragment extends Fragment {
             views.add(voo);
         }
 
-        for (View v : views)
+        for (View v : views) {
             v.setMinimumWidth(maxw);
+        }
 
         return binding.getRoot();
     }

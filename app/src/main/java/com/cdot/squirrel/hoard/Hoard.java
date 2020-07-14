@@ -1,7 +1,5 @@
 package com.cdot.squirrel.hoard;
 
-import com.cdot.squirrel.ui.R;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -121,6 +119,7 @@ public class Hoard {
 
     /**
      * Does the hoard require a save?
+     *
      * @return true if a save is needed
      */
     public boolean requiresSave() {
@@ -265,7 +264,7 @@ public class Hoard {
                     if (undoable) {
                         // Undo moves the node back to the original parent
                         HPath from_parent = new HPath(action.path).parent();
-                        Action undo = new Action(Action.MOVE, new_parent_path.append(name), parent.time, from_parent.toString());
+                        Action undo = new Action(Action.MOVE, new_parent_path.with(name), parent.time, from_parent.toString());
                         recordEvent(action, undo);
                     }
 
@@ -296,17 +295,17 @@ public class Hoard {
 
                 case Action.SET_ALARM:
                     if (undoable) {
-                        if (node.alarm == null)
+                        if (node.mAlarm == null)
                             // Undo by cancelling the new alarm
                             recordEvent(action, new Action(Action.CANCEL_ALARM, action.path, parent.time, name));
                         else
-                            recordEvent(action, new Action(Action.SET_ALARM, action.path, parent.time, node.alarm.toJSON().toString()));
+                            recordEvent(action, new Action(Action.SET_ALARM, action.path, parent.time, node.mAlarm.toJSON().toString()));
                     }
                     if (action.data == null)
-                        node.alarm = null;
+                        node.mAlarm = null;
                     else {
                         try {
-                            node.alarm = new Alarm(new JSONObject(action.data));
+                            node.mAlarm = new Alarm(new JSONObject(action.data));
                         } catch (JSONException je) {
                             throw new ConflictException(action, je.getMessage());
                         }
@@ -317,8 +316,8 @@ public class Hoard {
                 case Action.CANCEL_ALARM:
                     // Never generated, same as a set with null data
                     if (undoable)
-                        recordEvent(action, new Action(Action.SET_ALARM, action.path, parent.time, node.alarm.toJSON().toString()));
-                    node.alarm = null;
+                        recordEvent(action, new Action(Action.SET_ALARM, action.path, parent.time, node.mAlarm.toJSON().toString()));
+                    node.mAlarm = null;
                     node.time = action.time;
                     break;
 
@@ -327,20 +326,20 @@ public class Hoard {
                         throw new Error("Cannot constrain non-leaf node");
                     leaf = (Leaf) node;
                     if (undoable) {
-                        if (leaf.constraints != null)
-                            recordEvent(action, new Action(Action.CONSTRAIN, action.path, parent.time, leaf.constraints.toJSON().toString()));
+                        if (leaf.getConstraints() != null)
+                            recordEvent(action, new Action(Action.CONSTRAIN, action.path, parent.time, leaf.getConstraints().toJSON().toString()));
                         else
                             recordEvent(action, new Action(Action.CONSTRAIN, action.path, parent.time, null));
                     }
                     if (action.data == null)
-                        leaf.constraints = null;
+                        leaf.setConstraints(null);
                     else {
                         try {
-                            leaf.constraints = new Constraints(new JSONObject(action.data));
+                            leaf.setConstraints(new Constraints(new JSONObject(action.data)));
                         } catch (JSONException je) {
                             String[] bits = action.data.split(";", 2);
                             try {
-                                leaf.constraints = new Constraints(Integer.parseInt(bits[0]), bits[1]);
+                                leaf.setConstraints(new Constraints(Integer.parseInt(bits[0]), bits[1]));
                             } catch (NumberFormatException nfe) {
                                 throw new ConflictException(action, je.getMessage());
                             }
@@ -353,6 +352,10 @@ public class Hoard {
                     throw new ConflictException(action, "Unrecognised action type");
             }
         }
+
+        // Notify listeners
+        for (ChangeListener listener : mListeners)
+            listener.actionPlayed(action);
     }
 
     /**
@@ -384,14 +387,40 @@ public class Hoard {
     }
 
     /**
+     * Return the path to the given node.
+     *
+     * @param node the node to find
+     * @return the path, or null if the node is not found in the tree.
+     */
+    public HPath getPath(HoardNode node) {
+        return tree.getPath(node, new HPath());
+    }
+
+    /**
      * Promise to check all alarms. Returns a promise to resolve all the
      * promises returned by 'ring'.
-     * @param now the "current" time
+     *
+     * @param now    the "current" time
      * @param ringfn function([], Date)
      * @return a promise that resolves to the number of changes that need
      * to be saved
      */
     public void checkAlarms(long now, Alarm.Ringer ringfn) {
         tree.checkAlarms(new HPath(), now, ringfn);
+    }
+
+    public interface ChangeListener {
+        /**
+         * Invoked when an action is played
+         */
+        void actionPlayed(Action act);
+
+    }
+
+    List<ChangeListener> mListeners = new ArrayList<>();
+
+    public void addChangeListener(ChangeListener listener) {
+        if (mListeners.indexOf(listener) == -1)
+            mListeners.add(listener);
     }
 }

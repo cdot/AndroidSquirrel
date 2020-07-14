@@ -6,4 +6,9 @@
         <item>Medium</item>
         <item>Large</item>
     </array>
+    <array name="period_units">
+        <item>Days</item>
+        <item>Months</item>
+        <item>Years</item>
+    </array>
 </resources>

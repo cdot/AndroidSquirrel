@@ -1,8 +1,8 @@
 package com.cdot.squirrel.ui.holder;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.PopupMenu;
@@ -10,23 +10,32 @@ import android.widget.Toast;
 
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.cdot.squirrel.hoard.Action;
+import com.cdot.squirrel.hoard.Constraints;
+import com.cdot.squirrel.hoard.Hoard;
 import com.cdot.squirrel.hoard.HoardNode;
 import com.cdot.squirrel.hoard.Leaf;
 import com.cdot.squirrel.ui.R;
 import com.cdot.squirrel.ui.databinding.NodeHolderBinding;
+import com.cdot.squirrel.ui.fragment.AddNodeFragment;
+import com.cdot.squirrel.ui.fragment.AlarmFragment;
+import com.cdot.squirrel.ui.fragment.ConstrainFragment;
+import com.cdot.squirrel.ui.fragment.EditNodeFragment;
 import com.cdot.squirrel.ui.fragment.PickFragment;
-import com.cdot.squirrel.ui.fragment.SettingsFragment;
 import com.unnamed.b.atv.model.TreeNode;
-import com.unnamed.b.atv.view.AndroidTreeView;
 
 /**
  * View for the content (name, value) of a hoard node
  */
 public class NodeHolder extends TreeNode.BaseNodeViewHolder<HoardNode> {
+    private static final String TAG = "NodeHolder";
+
     NodeHolderBinding mBinding;
     TreeNode mTreeNode;
+    public static Hoard sHoard;
     HoardNode mHoardNode;
 
     public NodeHolder(Context context) {
@@ -52,6 +61,10 @@ public class NodeHolder extends TreeNode.BaseNodeViewHolder<HoardNode> {
             mBinding.nodeValue.setVisibility(View.GONE);
             mBinding.openCloseIcon.setOnClickListener(view1 -> tView.toggleNode(mTreeNode));
         }
+        mBinding.alarm.setOnClickListener(aview -> {
+            Toast toast = Toast.makeText(context, mHoardNode.getAlarm().toString(), Toast.LENGTH_SHORT);
+            toast.show();
+        });
 
         mTreeNode.setLongClickListener((tn, hn) -> {
             PopupMenu popupMenu = new PopupMenu(context, mBinding.getRoot());
@@ -73,65 +86,78 @@ public class NodeHolder extends TreeNode.BaseNodeViewHolder<HoardNode> {
         return mBinding.getRoot();
     }
 
-    private void updateView() {
+    public void updateView() {
         mBinding.nodeName.setText(mHoardNode.getName());
         if (mHoardNode instanceof Leaf)
             mBinding.nodeValue.setText(((Leaf) mHoardNode).getData());
 
-        if (mHoardNode.getAlarm() == null)
-            mBinding.alarm.setVisibility(View.GONE);
-        else {
-            mBinding.alarm.setVisibility(View.VISIBLE);
-            mBinding.alarm.setOnClickListener(aview -> {
-                Toast toast = Toast.makeText(context, "" + mHoardNode.getAlarm(), Toast.LENGTH_SHORT);
-                toast.show();
-            });
-        }
+        mBinding.alarm.setVisibility((mHoardNode.getAlarm() == null) ? View.GONE : View.VISIBLE);
     }
 
+    /**
+     * Hide the current fragment, pushing it onto the stack, then open a new fragment. A neat
+     * alternative to dialogs.
+     *
+     * @param fragment the fragment to switch to
+     */
     public void pushFragment(Fragment fragment) {
-        // How do I get to the fragment?
-        View v = getView();
-        Context context = v.getContext();
+        // Find the activity
+        Context context = getView().getContext();
         while (context instanceof ContextWrapper) {
             if (context instanceof FragmentActivity)
                 break;
             context = ((ContextWrapper) context).getBaseContext();
         }
         FragmentActivity act = (FragmentActivity) context;
-        FragmentTransaction ftx = act.getSupportFragmentManager().beginTransaction();
-        ftx.replace(R.id.fragment, fragment, SettingsFragment.class.getName());
+        FragmentManager fm = act.getSupportFragmentManager();
+        FragmentTransaction ftx = fm.beginTransaction();
+        // Hide, but don't close, the open fragment (which will always be the tree view)
+        ftx.hide(fm.findFragmentById(R.id.fragment));
+        ftx.add(R.id.fragment, fragment, fragment.getClass().getName());
         ftx.addToBackStack(null);
         ftx.commit();
     }
 
     public boolean onAction(int resource) {
-            switch (resource) {
-            case R.id.action_add_alarm:
-                updateView();
+        switch (resource) {
+            case R.id.action_alarm:
+                pushFragment(new AlarmFragment(mHoardNode));
                 break;
-            case R.id.action_add_folder:
-                updateView();
-                break;
-            case R.id.action_add_value:
-                updateView();
-                break;
-            case R.id.action_copy:
+            case R.id.action_randomise:
+                Constraints c = ((Leaf) mHoardNode).getConstraints();
+                if (c == null) c = new Constraints();
+                String newVal = c.random();
+                Action act = new Action(Action.EDIT, sHoard.getPath(mHoardNode), System.currentTimeMillis(), newVal);
+                try {
+                    sHoard.playAction(act, true);
+                } catch (Hoard.ConflictException ce) {
+                    Log.e(TAG, ce.getMessage());
+                }
                 updateView();
                 break;
             case R.id.action_pick:
-                pushFragment(new PickFragment((Leaf)mHoardNode));
+                pushFragment(new PickFragment((Leaf) mHoardNode));
                 break;
-            case R.id.action_delete:
-                updateView();
+            case R.id.action_constrain:
+                pushFragment(new ConstrainFragment((Leaf) mHoardNode));
+                break;
+            case R.id.action_add_folder:
+                pushFragment(new AddNodeFragment(mHoardNode, false));
+                break;
+            case R.id.action_add_value:
+                pushFragment(new AddNodeFragment(mHoardNode, true));
                 break;
             case R.id.action_edit:
-                updateView();
-                break;
-            case R.id.action_randomise:
+                pushFragment(new EditNodeFragment(mHoardNode, true));
                 updateView();
                 break;
             case R.id.action_rename:
+                pushFragment(new EditNodeFragment(mHoardNode, false));
+                updateView();
+                break;
+
+            case R.id.action_copy:
+            case R.id.action_delete:
                 updateView();
                 break;
         }
@@ -142,7 +168,6 @@ public class NodeHolder extends TreeNode.BaseNodeViewHolder<HoardNode> {
     public NodeHolder toggle(boolean active) {
         // Called from AndroidTreeView in response to toggleNode
         mBinding.openCloseIcon.setImageResource(active ? R.drawable.ic_folder_open : R.drawable.ic_folder_closed);
-        mHoardNode.isOpen = active;
         return this;
     }
 }

@@ -22,8 +22,7 @@ public abstract class HoardNode implements JSONable {
 
     long time = System.currentTimeMillis();
     String name = null;
-    Alarm alarm;
-    public boolean isOpen = false;
+    Alarm mAlarm;
 
     HoardNode(String name) {
         this.name = name;
@@ -34,7 +33,11 @@ public abstract class HoardNode implements JSONable {
     }
 
     public Alarm getAlarm() {
-        return alarm;
+        return mAlarm;
+    }
+
+    public void setAlarm(Alarm a) {
+        mAlarm = a;
     }
 
     /**
@@ -45,8 +48,8 @@ public abstract class HoardNode implements JSONable {
      */
     protected List<Action> actionsToCreate(HPath path) {
         List<Action> actions = new ArrayList<>();
-        if (alarm != null)
-            actions.addAll(alarm.actionsToCreate(path));
+        if (mAlarm != null)
+            actions.addAll(mAlarm.actionsToCreate(path));
         return actions;
     }
 
@@ -57,6 +60,18 @@ public abstract class HoardNode implements JSONable {
      */
     public List<Action> actionsToCreate() {
         return actionsToCreate(new HPath());
+    }
+
+    /**
+     * Return the path to the given node.
+     * @param find the node to find
+     * @param pathHere the path to this node
+     * @return the path, or null if the node is not found in the tree.
+     */
+    public HPath getPath(HoardNode find, HPath pathHere) {
+        if (this == find)
+            return pathHere;
+        return null;
     }
 
     /**
@@ -110,7 +125,7 @@ public abstract class HoardNode implements JSONable {
         time = job.getLong("time");
         if (job.has("alarm"))
             try {
-                alarm = new Alarm(job.getJSONObject("alarm"));
+                mAlarm = new Alarm(job.getJSONObject("alarm"));
             } catch (JSONException ignore) {
                 // Alarm formats are somewhat confused. Only handle correctly formatted alarms.
             }
@@ -130,10 +145,10 @@ public abstract class HoardNode implements JSONable {
      * @param differ difference reporter
      */
     void diff(HPath path, HoardNode b, DiffReporter differ) {
-        if (alarm != null && b.alarm == null)
+        if (mAlarm != null && b.mAlarm == null)
             differ.difference(new Action(Action.SET_ALARM, path), this, b);
-        else if (b.alarm != null)
-            differ.difference(new Action(Action.SET_ALARM, path, b.alarm.toJSON().toString()), this, b);
+        else if (b.mAlarm != null)
+            differ.difference(new Action(Action.SET_ALARM, path, b.mAlarm.toJSON().toString()), this, b);
         if (!name.equals(b.name))
             // Can this ever happen?
             differ.difference(new Action(Action.RENAME, path, b.name), this, b);
@@ -147,18 +162,18 @@ public abstract class HoardNode implements JSONable {
      * @param ring ringer to invoke when an alarm is triggered
      */
     void checkAlarms(HPath path, long now, Alarm.Ringer ring) {
-        if (alarm == null)
+        if (mAlarm == null)
             return;
 
-        if (alarm.due > 0 && now >= alarm.due) {
-            Date ding = new Date(alarm.due);
+        if (mAlarm.due > 0 && now >= mAlarm.due) {
+            Date ding = new Date(mAlarm.due);
             ring.ring(path, ding);
-            if (alarm.repeat > 0)
+            if (mAlarm.repeat > 0)
                 // Update the alarm for the next ring
-                alarm.due = now + alarm.repeat;
+                mAlarm.due = now + mAlarm.repeat;
             else
                 // Disable the alarm (no repeat)
-                alarm = null;
+                mAlarm = null;
         }
     }
 }

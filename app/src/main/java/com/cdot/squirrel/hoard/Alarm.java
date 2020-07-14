@@ -7,22 +7,22 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-class Alarm {
-    long due;
-    long repeat;
+public class Alarm {
+    public long due; // abs time (ms) when the alarm will ring
+    public long repeat; // repeat the alarm every ms
 
     interface Ringer {
         void ring(HPath path, Date ring);
     }
 
-    Alarm(long d, long r) {
-        due = d;
-        repeat = r;
+    public Alarm() {
+        due = 0;
+        repeat = 0;
     }
 
-    Alarm(Alarm a) {
-        due = a.due;
-        repeat = a.repeat;
+    public Alarm(long due, long repeat) {
+        this.due = due;
+        this.repeat = repeat;
     }
 
     Alarm(JSONObject job) throws JSONException {

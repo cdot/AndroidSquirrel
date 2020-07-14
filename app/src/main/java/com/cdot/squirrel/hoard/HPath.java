@@ -69,12 +69,12 @@ public class HPath extends ArrayList<String> {
     }
 
     /**
-     * Create a new path by appending a path string to this path
+     * Create a new path by appending a path component to this path
      *
      * @param s
      * @return
      */
-    public HPath append(String s) {
+    public HPath with(String s) {
         HPath p = new HPath(this);
         p.addBits(s);
         return p;
