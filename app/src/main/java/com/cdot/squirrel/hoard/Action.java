@@ -1,10 +1,11 @@
 package com.cdot.squirrel.hoard;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -96,12 +97,9 @@ public class Action implements JSONable {
     /**
      * Comparator for use in sorting action lists by time order
      */
-    static Comparator cmp = new Comparator<Action>() {
-        @Override
-        public int compare(Action item, Action item2) {
-            // Sorts NO_TIME first
-            return Long.compare(item.time, item2.time);
-        }
+    static Comparator<Action> cmp = (item, item2) -> {
+        // Sorts NO_TIME first
+        return Long.compare(item.time, item2.time);
     };
 
     /**
@@ -121,9 +119,7 @@ public class Action implements JSONable {
         } else if (!data.equals(ab.data))
             return false;
         // If either is marked NO_TIME then don't compare times
-        if (time != NO_TIME && ab.time != NO_TIME && time != ab.time)
-            return false;
-        return true;
+        return time == NO_TIME || ab.time == NO_TIME || time == ab.time;
     }
 
     /**
@@ -154,6 +150,7 @@ public class Action implements JSONable {
      *
      * @return {string} human readable description of action
      */
+    @NonNull
     public String toString() {
         DateFormat f = DateFormat.getDateTimeInstance();
         return this.type + ": " + path + " @" + f.format(new Date(time)) + ((data != null) ? " " + data : "");

@@ -2,7 +2,6 @@ package com.cdot.squirrel.crypto;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Base64;
 
 /**
  * Basic AES_V support, based on
@@ -72,7 +71,7 @@ public abstract class Aes {
 
         byte[][] state = new byte[][]{new byte[4], new byte[4], new byte[4], new byte[4]}; // initialise 4xNb byte-array 'state' with input [§3.4]
         for (int i = 0; i < 4 * Nb; i++)
-            state[i % 4][(int) (Math.floor(i / 4.0))] = (byte) input[i];
+            state[i % 4][(int) (Math.floor(i / 4.0))] = input[i];
 
         addRoundKey(state, w, 0, Nb);
 
@@ -258,8 +257,7 @@ public abstract class Aes {
     String encrypt(String plaintext, String password, int nBits) {
         byte[] ciphertextBytes = encrypt(plaintext.getBytes(), password, nBits);
         // base-64 encode ciphertext
-        byte[] bytes = Base64.getEncoder().encode(ciphertextBytes);
-        return new String(bytes);
+        return android.util.Base64.encodeToString(ciphertextBytes, android.util.Base64.DEFAULT);
     }
 
     /**
@@ -271,7 +269,8 @@ public abstract class Aes {
      * @return Decrypted data
      */
     String decrypt(String ciphertext, String password, int nBits) {
-        byte[] ciphertextBytes = Base64.getDecoder().decode(ciphertext);
+        byte[] ciphertextBytes = android.util.Base64.decode(ciphertext, android.util.Base64.DEFAULT);
+
         byte[] plaintextBytes = decrypt(ciphertextBytes, password, nBits);
         // decode from UTF8 back to Unicode multi-byte chars
         return new String(plaintextBytes, StandardCharsets.UTF_8);

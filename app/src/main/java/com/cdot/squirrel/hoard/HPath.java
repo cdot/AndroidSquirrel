@@ -1,5 +1,7 @@
 package com.cdot.squirrel.hoard;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -71,8 +73,8 @@ public class HPath extends ArrayList<String> {
     /**
      * Create a new path by appending a path component to this path
      *
-     * @param s
-     * @return
+     * @param s path component to append
+     * @return new path
      */
     public HPath with(String s) {
         HPath p = new HPath(this);
@@ -83,7 +85,7 @@ public class HPath extends ArrayList<String> {
     /**
      * Get the parent path of this path
      *
-     * @return
+     * @return parent path
      */
     public HPath parent() {
         HPath p = new HPath(this);
@@ -111,6 +113,8 @@ public class HPath extends ArrayList<String> {
      *
      * @return a string version of the path that can be used to reconstruct the path
      */
+    @NonNull
+    @Override
     public String toString() {
         StringBuilder s = new StringBuilder();
         boolean sep = false;

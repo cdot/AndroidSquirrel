@@ -1,5 +1,7 @@
 package com.cdot.squirrel.hoard;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -50,6 +52,7 @@ public class Alarm {
         repeat = job.getLong("repeat");
     }
 
+    @NonNull
     public String toString() {
         return "due " + due + (repeat > 0 ? " repeat " + repeat : "");
     }

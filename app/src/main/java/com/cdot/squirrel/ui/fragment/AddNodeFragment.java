@@ -36,7 +36,7 @@ public class AddNodeFragment extends Fragment {
             String name = mBinding.name.getText().toString();
             String data = mLeaf ? mBinding.value.getText().toString() : null;
             Hoard h = ((MainActivity) getActivity()).getHoard();
-            Action act = new Action(Action.NEW, h.getPath(mNode).with(name), System.currentTimeMillis(), data);
+            Action act = new Action(Action.NEW, h.getPathOf(mNode).with(name), System.currentTimeMillis(), data);
             try {
                 h.playAction(act, true);
             } catch (Hoard.ConflictException ce) {

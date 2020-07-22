@@ -23,9 +23,8 @@ import com.cdot.squirrel.hoard.HoardNode;
 import com.cdot.squirrel.ui.R;
 import com.cdot.squirrel.ui.activity.MainActivity;
 import com.cdot.squirrel.ui.databinding.TreeFragmentBinding;
-import com.cdot.squirrel.ui.holder.NodeHolder;
-import com.unnamed.b.atv.model.TreeNode;
-import com.unnamed.b.atv.view.AndroidTreeView;
+import com.cdot.squirrel.ui.tree.TreeNode;
+import com.cdot.squirrel.ui.tree.TreeRootView;
 
 /**
  * Container for tree nodes
@@ -33,7 +32,7 @@ import com.unnamed.b.atv.view.AndroidTreeView;
 public class TreeFragment extends Fragment implements Hoard.ChangeListener{
     private static final String TAG = "TreeFragment";
 
-    private AndroidTreeView mTreeView;
+    private TreeRootView mTreeNodeView;
     private Hoard mHoard;
     private TreeNode mTreeRoot;
 
@@ -44,29 +43,24 @@ public class TreeFragment extends Fragment implements Hoard.ChangeListener{
         TreeFragmentBinding binding = TreeFragmentBinding.inflate(inflater, container, false);
         View rootView = binding.getRoot();
 
+        // Enable action menu in this fragment
         setHasOptionsMenu(true);
 
-        mTreeRoot = TreeNode.root();
+        // Construct the model
+        mTreeRoot = new TreeNode(null);
         MainActivity act = (MainActivity) getActivity();
         mHoard = act.getHoard();
         mHoard.addChangeListener(this);
         populateTree(mTreeRoot, (Fork)mHoard.getRoot());
 
-        NodeHolder.sHoard = mHoard;
-        mTreeRoot.setViewHolder(new NodeHolder(getActivity()));
-        mTreeView = new AndroidTreeView(getActivity(), mTreeRoot)
-                .setDefaultAnimation(true)
-                .setUse2dScroll(true)
-                .setDefaultContainerStyle(R.style.TreeNodeStyleCustom)
-                .setDefaultViewHolder(NodeHolder.class);
-        mTreeView.setUseAutoToggle(false);
-
-        binding.treenodeLayout.addView(mTreeView.getView());
+        // Construct the view
+        mTreeNodeView = new TreeRootView(act, mTreeRoot);
+        binding.treenodeLayout.addView(mTreeNodeView.createView(inflater));
 
         if (savedInstanceState != null) {
             String state = savedInstanceState.getString("tState");
             if (!TextUtils.isEmpty(state)) {
-                mTreeView.restoreState(state);
+                mTreeNodeView.restoreState(state);
             }
         }
         return rootView;
@@ -161,41 +155,51 @@ public class TreeFragment extends Fragment implements Hoard.ChangeListener{
     @Override // Fragment
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString("tState", mTreeView.getSaveState());
-    }
-
-    private TreeNode findTreeNode(TreeNode tnode, HoardNode n) {
-        if (tnode.getValue() == n)
-            return tnode;
-        for (TreeNode tkid : tnode.getChildren()) {
-            TreeNode found = findTreeNode(tkid, n);
-            if (found != null)
-                return found;
-        }
-        return null;
+        outState.putString("tState", mTreeNodeView.getSaveState());
     }
 
     @Override // implements Hoard.ChangeListener
-    public void actionPlayed(Action act) {
+    public void actionPlayed(Action act, HoardNode parent, HoardNode node, HoardNode newParent) {
         TreeNode tn1, tn2;
         switch (act.type) {
             case Action.NEW:
-                tn1 = findTreeNode(mTreeRoot, mHoard.getNode(act.path.parent()));
-                tn2 = new TreeNode(mHoard.getNode(act.path));
+                // node = node added
+                // parent = node it was added to
+                tn1 = mTreeRoot.findTreeNode(parent);
+                tn2 = new TreeNode(node);
                 tn1.addChild(tn2);
-                mTreeView.addNode(tn1, tn2);
+                mTreeNodeView.addNode(tn1, tn2);
                 break;
+
             case Action.SET_ALARM:
             case Action.CONSTRAIN:
             case Action.EDIT:
-                tn1 = findTreeNode(mTreeRoot, mHoard.getNode(act.path));
-                ((NodeHolder)tn1.getViewHolder()).updateView();
-                break;
             case Action.RENAME:
-                tn1 = findTreeNode(mTreeRoot, mHoard.getNode(act.path.parent().with(act.data)));
-                ((NodeHolder)tn1.getViewHolder()).updateView();
+                tn1 = mTreeRoot.findTreeNode(node);
+                tn1.mTreeNodeView.updateView();
                 break;
 
+            case Action.DELETE:
+                tn1 = mTreeRoot.findTreeNode(node);
+                mTreeNodeView.removeNode(tn1);
+                tn2 = mTreeRoot.findTreeNode(parent);
+                if (tn2 != null) // will be null if tn1 is a root node
+                    tn2.mTreeNodeView.updateView();
+                break;
+
+            case Action.MOVE:
+                tn2 = mTreeRoot.findTreeNode(node); // remove from old parent
+                mTreeNodeView.removeNode(tn2);
+                tn1 = mTreeRoot.findTreeNode(newParent);
+                tn1.addChild(tn2);
+                mTreeNodeView.addNode(tn1, tn2);
+                break;
+
+            case Action.INSERT:
+                // node = node added
+                // parent = node it was added to
+                // TODO: create new subtree
+                break;
             default:
                 throw new Error("Unsupported action " + act);
         }

@@ -4,7 +4,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Constraints {
@@ -35,8 +34,8 @@ public class Constraints {
     /**
      * Construct from JSON ovject that has fields "length" and "chars"
      *
-     * @param job
-     * @throws JSONException
+     * @param job object to build from
+     * @throws JSONException if the object scan fails
      */
     Constraints(JSONObject job) throws JSONException {
         fromJSON(job);
@@ -44,7 +43,7 @@ public class Constraints {
 
     /**
      * Return true if this constraint set is the defaults that apply if no constraints are set
-     * @return
+     * @return true if this is the default constraints
      */
     public boolean isDefault() {
         return (length == DEFAULT_LENGTH && DEFAULT_CHARS.equals(characters));

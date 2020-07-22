@@ -5,9 +5,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.SortedMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
@@ -21,21 +21,24 @@ public class Fork extends HoardNode {
     /**
      * Construct from a name
      *
-     * @param name
+     * @param name name of the node
+     * @param h hoard the node is in
      */
-    Fork(String name) {
-        super(name);
+    Fork(String name, Hoard h) {
+        super(name, h);
         branches = new TreeMap<>();
     }
 
     /**
      * Construct from a JSON object
      *
+     * @param name the name of the new node
      * @param job the template object
+     * @param h hoard the node is in
      * @throws JSONException if there's a problem
      */
-    Fork(String name, JSONObject job) throws JSONException {
-        this(name);
+    Fork(String name, Hoard h, JSONObject job) throws JSONException {
+        this(name, h);
         fromJSON(job);
     }
 
@@ -74,13 +77,25 @@ public class Fork extends HoardNode {
     }
 
     @Override // HoardNode
-    public HPath getPath(HoardNode find, HPath pathHere) {
+    HPath makePath(HoardNode find, HPath pathHere) {
         if (this == find)
             return pathHere;
         for (HoardNode child : branches.values()) {
-            HPath found = child.getPath(find, pathHere.with(child.name));
+            HPath found = child.makePath(find, pathHere.with(child.mName));
             if (found != null)
                 return found;
+        }
+        return null;
+    }
+
+    @Override // HoardNode
+    public Fork getParentOf(HoardNode n) {
+        for (HoardNode child : branches.values()) {
+            if (n == child)
+                return this;
+            Fork f = child.getParentOf(n);
+            if (f != null)
+                return f;
         }
         return null;
     }
@@ -91,7 +106,7 @@ public class Fork extends HoardNode {
      * @param child new child to add
      */
     void addChild(HoardNode child) {
-        branches.put(child.name, child);
+        branches.put(child.mName, child);
     }
 
     /**
@@ -100,15 +115,15 @@ public class Fork extends HoardNode {
      * @param child node to remove
      */
     void removeChild(HoardNode child) {
-        branches.remove(child.name);
+        branches.remove(child.mName);
     }
 
     @Override
     protected List<Action> actionsToCreate(HPath path) {
         List<Action> actions = new ArrayList<>();
-        if (name != null) {
-            path = path.with(name);
-            actions.add(new Action(Action.NEW, path, time));
+        if (mName != null) {
+            path = path.with(mName);
+            actions.add(new Action(Action.NEW, path, mTime));
         }
         for (HoardNode child : branches.values()) {
             actions.addAll(child.actionsToCreate(path));
@@ -121,7 +136,7 @@ public class Fork extends HoardNode {
     public String toString(int tab) {
         String tabs = (tab > 0) ? String.format("%1$" + tab + "s", "") : "";
         StringBuilder sub = new StringBuilder(tabs);
-        sub.append(name).append(" { ").append(time);
+        sub.append(mName).append(" { ").append(mTime);
         if (tab > 0) sub.append("\n");
         for (HoardNode child : branches.values()) {
             sub.append(child.toString(tab + 1));
@@ -148,15 +163,15 @@ public class Fork extends HoardNode {
     public void fromJSON(JSONObject job) throws JSONException {
         super.fromJSON(job);
         JSONObject data = job.getJSONObject("data");
-        Iterator it = data.keys();
+        Iterator<String> it = data.keys();
         while (it.hasNext()) {
-            String name = (String)it.next();
+            String name = it.next();
             JSONObject child = (JSONObject)data.get(name);
             HoardNode kid;
             if (child.get("data") instanceof String)
-                kid = new Leaf(name, child);
+                kid = new Leaf(name, getHoard(), child);
             else
-                kid = new Fork(name, child);
+                kid = new Fork(name, getHoard(), child);
             branches.put(name, kid);
         }
     }
@@ -170,8 +185,8 @@ public class Fork extends HoardNode {
         List<HPath> matched = new ArrayList<>();
         Fork fb = (Fork) b;
         for (HoardNode subnode : branches.values()) {
-            HPath subpath = path.with(subnode.name);
-            HoardNode fbSubnode =fb.getChildByName(subnode.name);
+            HPath subpath = path.with(subnode.mName);
+            HoardNode fbSubnode =fb.getChildByName(subnode.mName);
             if (fbSubnode != null) {
                 matched.add(subpath);
                 subnode.diff(subpath, fbSubnode, differ);
@@ -181,7 +196,7 @@ public class Fork extends HoardNode {
             }
         }
         for (HoardNode subnode : fb.branches.values()) {
-            HPath subpath = path.with(subnode.name);
+            HPath subpath = path.with(subnode.mName);
             if (matched.indexOf(subpath) < 0) {
                 // HoardNode in b is new
                 if (subnode instanceof Fork)
@@ -198,10 +213,9 @@ public class Fork extends HoardNode {
     public boolean equals(Object other) {
         if (!super.equals(other) || !(other instanceof Fork))
             return false;
-        int i = 0;
         Fork on = (Fork)other;
         for (HoardNode c : branches.values()) {
-            if (!c.equals(on.branches.get(c.name)))
+            if (!c.equals(on.branches.get(c.mName)))
                 return false;
         }
         return true;
@@ -211,7 +225,7 @@ public class Fork extends HoardNode {
     void checkAlarms(HPath path, long now, Alarm.Ringer ring) {
         super.checkAlarms(path, now, ring);
         for (HoardNode c : branches.values()) {
-            c.checkAlarms(path.with(c.name), now, ring);
+            c.checkAlarms(path.with(c.mName), now, ring);
         }
     }
 }

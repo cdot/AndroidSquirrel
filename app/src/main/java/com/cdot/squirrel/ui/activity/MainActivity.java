@@ -4,6 +4,7 @@ import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.cdot.squirrel.hoard.Action;
@@ -49,5 +50,20 @@ public class MainActivity extends AppCompatActivity {
 
     public Hoard getHoard() {
         return mHoard;
+    }
+    /**
+     * Hide the current fragment, pushing it onto the stack, then open a new fragment. A neat
+     * alternative to dialogs.
+     *
+     * @param fragment the fragment to switch to
+     */
+    public void pushFragment(Fragment fragment) {
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ftx = fm.beginTransaction();
+        // Hide, but don't close, the open fragment (which will always be the tree view)
+        ftx.hide(fm.findFragmentById(R.id.fragment));
+        ftx.add(R.id.fragment, fragment, fragment.getClass().getName());
+        ftx.addToBackStack(null);
+        ftx.commit();
     }
 }

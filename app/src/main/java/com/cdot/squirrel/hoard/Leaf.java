@@ -14,11 +14,13 @@ public class Leaf extends HoardNode {
     /**
      * Construct from a JSON object
      *
+     * @param name name of the node
      * @param job the template object
+     * @param h hoard the node is in
      * @throws JSONException if there's a problem
      */
-    Leaf(String name, JSONObject job) throws JSONException {
-        super(name);
+    Leaf(String name, Hoard h, JSONObject job) throws JSONException {
+        super(name, h);
         fromJSON(job);
     }
 
@@ -28,8 +30,8 @@ public class Leaf extends HoardNode {
      * @param name the name of the new node
      * @param data data to associate with the node
      */
-    Leaf(String name, String data) {
-        super(name);
+    Leaf(String name, Hoard h, String data) {
+        super(name, h);
         mData = data;
     }
 
@@ -66,7 +68,7 @@ public class Leaf extends HoardNode {
     @Override
     protected List<Action> actionsToCreate(HPath path) {
         List<Action> actions = new ArrayList<>();
-        actions.add(new Action(Action.NEW, path.with(name), time, mData));
+        actions.add(new Action(Action.NEW, path.with(mName), mTime, mData));
         if (mConstraints != null)
             actions.addAll(mConstraints.actionsToCreate(path));
         actions.addAll(super.actionsToCreate(path));
@@ -76,7 +78,7 @@ public class Leaf extends HoardNode {
     @Override
     public String toString(int tab) {
         String tabs = (tab == 0) ? "" : String.format("%1$" + tab + "s", "");
-        return tabs + name + ": '" + mData + "' " + time + (tab > 0 ? "\n" : "");
+        return tabs + mName + ": '" + mData + "' " + mTime + (tab > 0 ? "\n" : "");
     }
 
     @Override

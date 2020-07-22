@@ -42,7 +42,7 @@ public class EditNodeFragment extends Fragment {
             String name = mBinding.name.getText().toString();
             String value = mBinding.value.getText().toString();
             Hoard h = ((MainActivity) getActivity()).getHoard();
-            Action act = new Action(mEditValue ? Action.EDIT : Action.RENAME, h.getPath(mNode), System.currentTimeMillis(), mEditValue ? value : name);
+            Action act = new Action(mEditValue ? Action.EDIT : Action.RENAME, h.getPathOf(mNode), System.currentTimeMillis(), mEditValue ? value : name);
             try {
                 h.playAction(act, true);
             } catch (Hoard.ConflictException ce) {

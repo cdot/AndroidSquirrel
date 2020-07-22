@@ -66,7 +66,7 @@ public class AlarmFragment extends Fragment implements AdapterView.OnItemSelecte
             int repeat = s.length() > 0 ? Integer.parseInt(s) : 0;
             Alarm na = new Alarm(new Date().getTime() + mDueUnit * due, mRepeatUnit * repeat);
             Hoard h = ((MainActivity) getActivity()).getHoard();
-            Action act = new Action(Action.SET_ALARM, h.getPath(mNode), System.currentTimeMillis(), na.toJSON().toString());
+            Action act = new Action(Action.SET_ALARM, h.getPathOf(mNode), System.currentTimeMillis(), na.toJSON().toString());
             try {
                 h.playAction(act, true);
             } catch (Hoard.ConflictException ce) {
@@ -77,7 +77,7 @@ public class AlarmFragment extends Fragment implements AdapterView.OnItemSelecte
         mBinding.clearAlarm.setOnClickListener((v) -> {
             clear();
             Hoard h = ((MainActivity) getActivity()).getHoard();
-            Action act = new Action(Action.SET_ALARM, h.getPath(mNode), System.currentTimeMillis(), null);
+            Action act = new Action(Action.SET_ALARM, h.getPathOf(mNode), System.currentTimeMillis(), null);
             try {
                 h.playAction(act, true);
             } catch (Hoard.ConflictException ce) {

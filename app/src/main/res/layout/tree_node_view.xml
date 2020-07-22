@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/node_header"
+        android:layout_width="match_parent"
+        android:minHeight="48dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:layout_height="wrap_content">
+
+        <ImageButton
+            android:id="@+id/open_close_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:backgroundTint="?android:attr/panelBackground"
+            android:src="@drawable/ic_folder_closed" />
+
+        <TextView
+            android:id="@+id/node_name"
+            android:textSize="16sp"
+            android:layout_marginStart="5sp"
+            android:layout_marginEnd="5sp"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@+id/open_close_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/node_value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="5sp"
+            android:layout_marginEnd="5sp"
+            android:layout_toEndOf="@+id/node_name"
+            android:fontFamily="monospace"
+            android:textSize="16sp"
+            android:typeface="serif" />
+
+        <ImageButton
+            android:id="@+id/alarm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@+id/node_value"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:backgroundTint="?android:attr/panelBackground"
+            android:src="@drawable/ic_alarm" />
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/node_children"
+        android:paddingStart="20dp"
+        android:paddingEnd="0dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone">
+    </LinearLayout>
+</LinearLayout>

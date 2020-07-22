@@ -1,11 +1,15 @@
 package com.cdot.squirrel.hoard;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Base class of node types in a hoard tree
@@ -20,16 +24,55 @@ public abstract class HoardNode implements JSONable {
         void difference(Action act, HoardNode a, HoardNode b);
     }
 
-    long time = System.currentTimeMillis();
-    String name = null;
-    Alarm mAlarm;
+    protected long mTime = System.currentTimeMillis();
+    protected String mName;
+    private Alarm mAlarm;
+    // Use a weak reference to the hoard so we can garbage collect
+    private WeakReference<Hoard> mHoard;
 
-    HoardNode(String name) {
-        this.name = name;
+    /**
+     * Construct
+     *
+     * @param name  the name of the new node
+     * @param hoard hoard the node is in
+     */
+    HoardNode(String name, Hoard hoard) {
+        mName = name;
+        mHoard = new WeakReference<>(hoard);
+    }
+
+    public Hoard getHoard() {
+        return mHoard.get();
+    }
+
+    public HPath makePath() {
+        return getHoard().getPathOf(this);
+    }
+
+    /**
+     * Get the parent of this node
+     *
+     * @return the parent node (which must be a fork) or null
+     */
+    public HoardNode getParent() {
+        return getHoard().getParentOf(this);
+    }
+
+    /**
+     * Get the parent of the given node in this subtree
+     *
+     * @return the parent node (which must be a fork) or null
+     */
+    public Fork getParentOf(HoardNode n) {
+        return null;
     }
 
     public String getName() {
-        return name;
+        return mName;
+    }
+
+    public void setName(String n) {
+        mName = n;
     }
 
     public Alarm getAlarm() {
@@ -38,6 +81,14 @@ public abstract class HoardNode implements JSONable {
 
     public void setAlarm(Alarm a) {
         mAlarm = a;
+    }
+
+    public void setTime(long t) {
+        mTime = t;
+    }
+
+    public long getTime() {
+        return mTime;
     }
 
     /**
@@ -64,11 +115,12 @@ public abstract class HoardNode implements JSONable {
 
     /**
      * Return the path to the given node.
-     * @param find the node to find
+     *
+     * @param find     the node to find
      * @param pathHere the path to this node
      * @return the path, or null if the node is not found in the tree.
      */
-    public HPath getPath(HoardNode find, HPath pathHere) {
+    HPath makePath(HoardNode find, HPath pathHere) {
         if (this == find)
             return pathHere;
         return null;
@@ -88,7 +140,7 @@ public abstract class HoardNode implements JSONable {
     public boolean equals(Object other) {
         HoardNode on = (HoardNode) other;
         // Could check constraints and alarms, but shouldn't be needed if we compare time
-        return (name.equals(on.name) && time == on.time);
+        return (Objects.equals(mName, on.mName) && mTime == on.mTime);
     }
 
     /**
@@ -105,6 +157,7 @@ public abstract class HoardNode implements JSONable {
      *
      * @return a string
      */
+    @NonNull
     @Override
     public String toString() {
         return toString(0);
@@ -114,7 +167,7 @@ public abstract class HoardNode implements JSONable {
     public JSONObject toJSON() {
         JSONObject job = new JSONObject();
         try {
-            job.put("time", time);
+            job.put("time", mTime);
         } catch (JSONException ignore) {
         }
         return job;
@@ -122,7 +175,7 @@ public abstract class HoardNode implements JSONable {
 
     @Override
     public void fromJSON(JSONObject job) throws JSONException {
-        time = job.getLong("time");
+        mTime = job.getLong("time");
         if (job.has("alarm"))
             try {
                 mAlarm = new Alarm(job.getJSONObject("alarm"));
@@ -149,15 +202,15 @@ public abstract class HoardNode implements JSONable {
             differ.difference(new Action(Action.SET_ALARM, path), this, b);
         else if (b.mAlarm != null)
             differ.difference(new Action(Action.SET_ALARM, path, b.mAlarm.toJSON().toString()), this, b);
-        if (!name.equals(b.name))
+        if (!Objects.equals(mName, b.mName))
             // Can this ever happen?
-            differ.difference(new Action(Action.RENAME, path, b.name), this, b);
+            differ.difference(new Action(Action.RENAME, path, b.mName), this, b);
     }
 
     /**
      * Check all alarms in this subtree.
      *
-     * @param now the "current" time
+     * @param now  the "current" time
      * @param path tree path to reach this node
      * @param ring ringer to invoke when an alarm is triggered
      */

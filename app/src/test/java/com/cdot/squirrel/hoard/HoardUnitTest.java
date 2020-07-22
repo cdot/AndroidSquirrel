@@ -18,7 +18,6 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -61,26 +60,26 @@ public class HoardUnitTest {
         assertEquals(0, h.canUndo());
 
         Fork root = h.getRoot();
-        assertNull(root.name);
+        assertNull(root.getName());
         assertEquals(1, root.getChildren().size());
 
         Fork fd = (Fork) h.getRoot().getChildByName("FineDining");
         assertNotNull(fd);
-        assertEquals(4 * HOUR, fd.time); // truffles timestamp
+        assertEquals(4 * HOUR, fd.getTime()); // truffles timestamp
         assertEquals(2, fd.getChildren().size());
 
         Fork caviar = (Fork) fd.getChildren().get("Caviar");
         assertNotNull(caviar);
-        assertEquals(3 * HOUR, caviar.time); // salmon timestamp
+        assertEquals(3 * HOUR, caviar.getTime()); // salmon timestamp
 
         Leaf salmon = (Leaf) caviar.getChildren().get("Salmon");
         assertNotNull(salmon);
-        assertEquals(3 * HOUR, salmon.time);
+        assertEquals(3 * HOUR, salmon.getTime());
         assertEquals("Orange Eggs", salmon.getData());
 
         Fork truffles = (Fork) fd.getChildren().get("Truffles");
         assertNotNull(truffles);
-        assertEquals(4 * HOUR, truffles.time);
+        assertEquals(4 * HOUR, truffles.getTime());
     }
 
     @Test
@@ -110,20 +109,20 @@ public class HoardUnitTest {
         // There should be no undo history
         assertEquals(0, h.canUndo());
         Fork root = h.getRoot();
-        assertNull(root.name);
+        assertNull(root.getName());
         assertEquals(1, root.getChildren().size());
 
         Fork fd = (Fork) h.getRoot().getChildByName("FineDining");
         assertNotNull(fd);
-        assertEquals(7 * HOUR, fd.time); // truffles timestamp
+        assertEquals(7 * HOUR, fd.getTime()); // truffles timestamp
         assertEquals(2, fd.getChildren().size());
 
         // client_actions was read first
         Leaf truffles = (Leaf) fd.getChildren().get("Truffles");
         Fork caviar = (Fork) fd.getChildren().get("Caviar");
         assertNotNull(caviar);
-        assertEquals(caviar.name, "Caviar");
-        assertEquals(8 * HOUR, caviar.time); // salmon timestamp
+        assertEquals(caviar.getName(), "Caviar");
+        assertEquals(8 * HOUR, caviar.getTime()); // salmon timestamp
 
         Leaf lumpfish = (Leaf) caviar.getChildren().get("Lumpfish");
         assertNotNull(lumpfish);
@@ -132,12 +131,12 @@ public class HoardUnitTest {
         assertEquals(lumpfish, h.getNode(new HPath("FineDining↘Caviar↘Lumpfish")));
 
         Leaf salmon = (Leaf) caviar.getChildren().get("Salmon");
-        assertEquals("Salmon", salmon.name);
-        assertEquals(3 * HOUR, salmon.time);
+        assertEquals("Salmon", salmon.getName());
+        assertEquals(3 * HOUR, salmon.getTime());
         assertEquals("Orange Eggs", salmon.getData());
 
-        assertEquals(truffles.name, "Truffles");
-        assertEquals(6 * HOUR, truffles.time);
+        assertEquals(truffles.getName(), "Truffles");
+        assertEquals(6 * HOUR, truffles.getTime());
     }
 
     @Test
@@ -174,7 +173,7 @@ public class HoardUnitTest {
         assertEquals(3, conflicted);
         // There were two conflicts, so history should contain one action, a delete of the "new" node
         assertEquals(1, h.canUndo());
-        Hoard.Event hist = h.history.get(0);
+        Hoard.Event hist = h.getHistory().get(0);
         assertTrue(cloud_actiona[2].equals(hist.redo));
         Action undie = new Action(Action.DELETE, new HPath("FineDining↘Caviar↘Salmon"), 8 * HOUR);
         assertEquals(undie, hist.undo);
@@ -238,29 +237,29 @@ public class HoardUnitTest {
             fail(ce.getMessage());
         }
         assertEquals(h.canUndo(), 1);
-        assertEquals(movact, h.history.get(0).redo);
+        assertEquals(movact, h.getHistory().get(0).redo);
 
         Action unact = new Action(Action.MOVE, new HPath("FineDining↘Roe↘Beluga"), 9 * HOUR, "FineDining↘Caviar");
-        assertEquals(unact, h.history.get(0).undo);
+        assertEquals(unact, h.getHistory().get(0).undo);
 
         Fork root = h.getRoot();
         assertEquals(1, root.getChildren().size());
         root = (Fork) root.getChildren().get("FineDining");
-        assertEquals("FineDining", root.name);
+        assertEquals("FineDining", root.getName());
 
         // Roe, Caviar, Truffles
         assertEquals(3, root.getChildren().size());
 
         Fork caviar = (Fork) root.getChildren().get("Caviar");
-        assertEquals("Caviar", caviar.name);
-        assertEquals(caviar.time, 10 * HOUR);
+        assertEquals("Caviar", caviar.getName());
+        assertEquals(caviar.getTime(), 10 * HOUR);
         Leaf salmon = (Leaf) caviar.getChildren().get("Salmon");
-        assertEquals("Salmon", salmon.name);
-        assertEquals(salmon.time, 3 * HOUR);
+        assertEquals("Salmon", salmon.getName());
+        assertEquals(salmon.getTime(), 3 * HOUR);
 
         Fork truffles = (Fork) root.getChildren().get("Truffles");
-        assertEquals("Truffles", truffles.name);
-        assertEquals(truffles.time, 4 * HOUR);
+        assertEquals("Truffles", truffles.getName());
+        assertEquals(truffles.getTime(), 4 * HOUR);
 
         assertEquals(1, h.canUndo());
         try {
@@ -285,30 +284,30 @@ public class HoardUnitTest {
         } catch (Hoard.ConflictException ce) {
             fail(ce.getMessage());
         }
-        assertEquals(act, h.history.get(0).redo);
-        assertEquals(tca, h.history.get(0).undo);
+        assertEquals(act, h.getHistory().get(0).redo);
+        assertEquals(tca, h.getHistory().get(0).undo);
 
         Fork root = h.getRoot();
-        assertNull(root.name);
+        assertNull(root.getName());
         assertEquals(1, root.getChildren().size());
 
         Fork fd = (Fork) h.getRoot().getChildByName("FineDining");
-        assertEquals("FineDining", fd.name);
-        assertEquals(4 * HOUR, fd.time); // truffles timestamp
+        assertEquals("FineDining", fd.getName());
+        assertEquals(4 * HOUR, fd.getTime()); // truffles timestamp
         assertEquals(2, fd.getChildren().size());
 
         Fork caviar = (Fork) fd.getChildren().get("Caviar");
-        assertEquals("Caviar", caviar.name);
-        assertEquals(3 * HOUR, caviar.time); // salmon timestamp
+        assertEquals("Caviar", caviar.getName());
+        assertEquals(3 * HOUR, caviar.getTime()); // salmon timestamp
 
         Leaf salmon = (Leaf) caviar.getChildren().get("Salmon");
-        assertEquals("Salmon", salmon.name);
-        assertEquals(3 * HOUR, salmon.time);
+        assertEquals("Salmon", salmon.getName());
+        assertEquals(3 * HOUR, salmon.getTime());
         assertEquals("Orange Eggs", salmon.getData());
 
         Fork truffles = (Fork) fd.getChildren().get("Earthball");
-        assertEquals("Earthball", truffles.name);
-        assertEquals(5 * HOUR, truffles.time);
+        assertEquals("Earthball", truffles.getName());
+        assertEquals(5 * HOUR, truffles.getTime());
     }
 
     @Test
@@ -328,7 +327,6 @@ public class HoardUnitTest {
     @Test
     public void EDIT() {
         Hoard h = new Hoard(cloud_actions);
-
         Action act = new Action(Action.EDIT, new HPath("FineDining↘Caviar↘Salmon"), 9 * HOUR, "Earthball");
         Action tca = new Action(Action.EDIT, new HPath("FineDining↘Caviar↘Salmon"), 3 * HOUR, "Orange Eggs");
 
@@ -338,32 +336,32 @@ public class HoardUnitTest {
             fail(ce.getMessage());
         }
         assertEquals(1, h.canUndo());
-        assertEquals(act, h.history.get(0).redo);
-        assertEquals(tca, h.history.get(0).undo);
+        assertEquals(act, h.getHistory().get(0).redo);
+        assertEquals(tca, h.getHistory().get(0).undo);
         h.clearHistory();
         assertEquals(0, h.canUndo());
 
         Fork root = h.getRoot();
-        assertNull(root.name);
+        assertNull(root.getName());
         assertEquals(1, root.getChildren().size());
 
         Fork fd = (Fork) h.getRoot().getChildByName("FineDining");
-        assertEquals("FineDining", fd.name);
-        assertEquals(4 * HOUR, fd.time); // truffles timestamp
+        assertEquals("FineDining", fd.getName());
+        assertEquals(4 * HOUR, fd.getTime()); // truffles timestamp
         assertEquals(2, fd.getChildren().size());
 
         Fork caviar = (Fork) fd.getChildren().get("Caviar");
-        assertEquals("Caviar", caviar.name);
-        assertEquals(3 * HOUR, caviar.time); // salmon timestamp
+        assertEquals("Caviar", caviar.getName());
+        assertEquals(3 * HOUR, caviar.getTime()); // salmon timestamp
 
         Leaf salmon = (Leaf) caviar.getChildren().get("Salmon");
-        assertEquals("Salmon", salmon.name);
-        assertEquals(9 * HOUR, salmon.time);
+        assertEquals("Salmon", salmon.getName());
+        assertEquals(9 * HOUR, salmon.getTime());
         assertEquals("Earthball", salmon.getData());
 
         Fork truffles = (Fork) fd.getChildren().get("Truffles");
-        assertEquals("Truffles", truffles.name);
-        assertEquals(4 * HOUR, truffles.time);
+        assertEquals("Truffles", truffles.getName());
+        assertEquals(4 * HOUR, truffles.getTime());
     }
 
     @Test
@@ -402,25 +400,25 @@ public class HoardUnitTest {
             fail(ce.getMessage());
         }
         assertEquals(1, h.canUndo());
-        assertEquals(act, h.history.get(0).redo);
-        assertEquals(tca, h.history.get(0).undo);
+        assertEquals(act, h.getHistory().get(0).redo);
+        assertEquals(tca, h.getHistory().get(0).undo);
 
         Fork root = h.getRoot();
-        assertNull(root.name);
+        assertNull(root.getName());
         assertEquals(1, root.getChildren().size());
 
         Fork fd = (Fork) h.getRoot().getChildByName("FineDining");
-        assertEquals("FineDining", fd.name);
-        assertEquals(11 * HOUR, fd.time); // truffles timestamp
+        assertEquals("FineDining", fd.getName());
+        assertEquals(11 * HOUR, fd.getTime()); // truffles timestamp
         assertEquals(1, fd.getChildren().size());
 
         Fork caviar = (Fork) fd.getChildren().get("Caviar");
-        assertEquals("Caviar", caviar.name);
-        assertEquals(3 * HOUR, caviar.time); // salmon timestamp
+        assertEquals("Caviar", caviar.getName());
+        assertEquals(3 * HOUR, caviar.getTime()); // salmon timestamp
 
         Leaf salmon = (Leaf) caviar.getChildren().get("Salmon");
-        assertEquals("Salmon", salmon.name);
-        assertEquals(3 * HOUR, salmon.time);
+        assertEquals("Salmon", salmon.getName());
+        assertEquals(3 * HOUR, salmon.getTime());
         assertEquals("Orange Eggs", salmon.getData());
 
         try {
@@ -433,26 +431,26 @@ public class HoardUnitTest {
         //assertEquals(new Hoard(cloud_actions).getRoot(), h.getRoot());
 
         root = h.getRoot();
-        assertNull(root.name);
+        assertNull(root.getName());
         assertEquals(1, root.getChildren().size());
 
         fd = (Fork) h.getRoot().getChildByName("FineDining");
-        assertEquals("FineDining", fd.name);
-        assertEquals(11 * HOUR, fd.time); // truffles timestamp
+        assertEquals("FineDining", fd.getName());
+        assertEquals(11 * HOUR, fd.getTime()); // truffles timestamp
         assertEquals(2, fd.getChildren().size());
 
         caviar = (Fork) fd.getChildren().get("Caviar");
-        assertEquals("Caviar", caviar.name);
-        assertEquals(3 * HOUR, caviar.time); // salmon timestamp
+        assertEquals("Caviar", caviar.getName());
+        assertEquals(3 * HOUR, caviar.getTime()); // salmon timestamp
 
         salmon = (Leaf) caviar.getChildren().get("Salmon");
-        assertEquals("Salmon", salmon.name);
-        assertEquals(3 * HOUR, salmon.time);
+        assertEquals("Salmon", salmon.getName());
+        assertEquals(3 * HOUR, salmon.getTime());
         assertEquals("Orange Eggs", salmon.getData());
 
         Fork truffles = (Fork) fd.getChildren().get("Truffles");
-        assertEquals("Truffles", truffles.name);
-        assertEquals(4 * HOUR, truffles.time);
+        assertEquals("Truffles", truffles.getName());
+        assertEquals(4 * HOUR, truffles.getTime());
     }
 
     @Test
@@ -596,7 +594,7 @@ public class HoardUnitTest {
         assertFalse(fungi.getConstraints().isAcceptable(""));
         assertFalse(fungi.getConstraints().isAcceptable(null));
         assertFalse(fungi.getConstraints().isAcceptable("abcdxfABCDEF0123456789"));
-        assertEquals("[N: Truffles @01/01/70 01:00 Fungi, X:  @01/01/70 01:00 {\"size\":10,\"chars\":\"a-fA-F0-9\"}]", fungi.actionsToCreate().toString());
+        assertEquals("[N: Truffles @01-Jan-1970 01:00:00 Fungi, X:  @01-Jan-1970 01:00:00 {\"size\":10,\"chars\":\"a-fA-F0-9\"}]", fungi.actionsToCreate().toString());
         try {
             h.undo();
         } catch (Hoard.ConflictException ce) {
@@ -652,9 +650,9 @@ public class HoardUnitTest {
         HoardNode n = h.getNode(new HPath("FineDining↘Caviar"));
         assertNotNull(n);
         assertTrue(n instanceof Fork);
-        assertNotNull(n.mAlarm);
-        assertEquals(1, n.mAlarm.due);
-        assertEquals(1000000, n.mAlarm.repeat);
+        assertNotNull(n.getAlarm());
+        assertEquals(1, n.getAlarm().due);
+        assertEquals(1000000, n.getAlarm().repeat);
 
         // A set alarm with no alarm data means clear the alarm
         act = new Action(Action.SET_ALARM, new HPath("FineDining↘Caviar"));
@@ -664,7 +662,7 @@ public class HoardUnitTest {
             fail(ce.getMessage());
         }
         n = h.getNode(new HPath("FineDining↘Caviar"));
-        assertNull(n.mAlarm);
+        assertNull(n.getAlarm());
 
         try {
             h.undo();
@@ -672,10 +670,10 @@ public class HoardUnitTest {
             fail(ce.getMessage());
         }
         n = h.getNode(new HPath("FineDining↘Caviar"));
-                assertNotNull(n.mAlarm);
-        assertEquals(1, n.mAlarm.due);
-        assertEquals(1000000, n.mAlarm.repeat);
-        assertEquals("[N: Caviar @01/01/70 05:00, N: Caviar↘Salmon @01/01/70 04:00 Orange Eggs, A: Caviar @01/01/70 01:00 {\"due\":1,\"repeat\":1000000}]", n.actionsToCreate().toString());
+        assertNotNull(n.getAlarm());
+        assertEquals(1, n.getAlarm().due);
+        assertEquals(1000000, n.getAlarm().repeat);
+        assertEquals("[N: Caviar @01-Jan-1970 05:00:00, N: Caviar↘Salmon @01-Jan-1970 04:00:00 Orange Eggs, A: Caviar @01-Jan-1970 01:00:00 {\"due\":1,\"repeat\":1000000}]", n.actionsToCreate().toString());
 
         try {
             h.undo();
@@ -684,15 +682,15 @@ public class HoardUnitTest {
         }
         n = h.getNode(new HPath("FineDining↘Caviar"));
 
-        assertNull(n.mAlarm);
+        assertNull(n.getAlarm());
     }
 
     @Test
     public void should_ring_alarms() {
         Hoard h = new Hoard(cloud_actions);
         try {
-             h.playAction(new Action(Action.SET_ALARM, new HPath("FineDining"), "{\"due\":" + 72 * HOUR + ", \"repeat\":" + (48 * HOUR) + "}"), false);
-             h.playAction(new Action(Action.SET_ALARM, new HPath("FineDining↘Caviar↘Salmon"), "{\"due\":" + 24 * HOUR + ", \"repeat\":0}"), false);
+            h.playAction(new Action(Action.SET_ALARM, new HPath("FineDining"), "{\"due\":" + 72 * HOUR + ", \"repeat\":" + (48 * HOUR) + "}"), false);
+            h.playAction(new Action(Action.SET_ALARM, new HPath("FineDining↘Caviar↘Salmon"), "{\"due\":" + 24 * HOUR + ", \"repeat\":0}"), false);
         } catch (Hoard.ConflictException ce) {
             fail(ce.getMessage());
         }
@@ -712,5 +710,82 @@ public class HoardUnitTest {
         });
         assertNotNull(rung.get("FineDining"));
         assertNotNull(rung.get("FineDining↘Caviar↘Salmon"));
+    }
+
+    @Test
+    public void should_call_change_listener() {
+        Hoard h = new Hoard();
+
+        final Action a = new Action(Action.NEW, new HPath("A"), 1 * HOUR);
+        final boolean[] listed = {false};
+        h.addChangeListener((act, parent, node, newParent) -> {
+            assertEquals(a, act);
+            HoardNode n = h.getRoot().getByPath(new HPath("A"));
+            assertEquals(n, node);
+            assertNull(parent.getName());
+            assertNull(newParent);
+            listed[0] = true;
+        });
+        try {
+            h.playAction(a, true);
+        } catch (Hoard.ConflictException ce) {
+            fail(ce.getMessage());
+        }
+        assert (listed[0]);
+        h.clearChangeListeners();
+
+        listed[0] = false;
+        final Action b = new Action(Action.NEW, new HPath("B"), 1 * HOUR);
+        h.addChangeListener((act, parent, node, newParent) -> {
+            assertEquals(b, act);
+            HoardNode n = h.getRoot().getByPath(new HPath("B"));
+            assertEquals(n, node);
+            assertNull(parent.getName());
+            assertNull(newParent);
+            listed[0] = true;
+        });
+        try {
+            h.playAction(b, true);
+        } catch (Hoard.ConflictException ce) {
+            fail(ce.getMessage());
+        }
+        assert (listed[0]);
+
+        h.clearChangeListeners();
+        listed[0] = false;
+        final Action ac = new Action(Action.NEW, new HPath("A↘C"), 1 * HOUR);
+        h.addChangeListener((act, parent, node, newParent) -> {
+            assertEquals(ac, act);
+            HoardNode n = h.getRoot().getByPath(new HPath("A↘C"));
+            assertEquals(n, node);
+            assertEquals("A", parent.getName());
+            assertNull(newParent);
+            listed[0] = true;
+        });
+        try {
+            h.playAction(ac, true);
+        } catch (Hoard.ConflictException ce) {
+            fail(ce.getMessage());
+        }
+        assert (listed[0]);
+
+        h.clearChangeListeners();
+        listed[0] = false;
+        final Action acb = new Action(Action.MOVE, new HPath("A↘C"), 1 * HOUR, "B");
+        h.addChangeListener((act, parent, node, newParent) -> {
+            assertEquals(acb, act);
+            assertNull(h.getRoot().getByPath(new HPath("A↘C")));
+            HoardNode n = h.getRoot().getByPath(new HPath("B↘C"));
+            assertEquals(n, node);
+            assertEquals("A", parent.getName());
+            assertEquals("B", newParent.getName());
+            listed[0] = true;
+        });
+        try {
+            h.playAction(acb, true);
+        } catch (Hoard.ConflictException ce) {
+            fail(ce.getMessage());
+        }
+        assert (listed[0]);
     }
 }

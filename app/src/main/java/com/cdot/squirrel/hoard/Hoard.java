@@ -29,11 +29,19 @@ public class Hoard {
         }
     }
 
+    /**
+     * Exception raised when there is a problem playing an action into a hoard
+     */
     public static class ConflictException extends Exception {
-        Action action;
-        String error;
-        Object[] args;
+        Action action; // The action being played
+        String error;  // Text of the error, a format string
+        Object[] args; // Arguments to the format string
 
+        /**
+         * @param act    The action being played
+         * @param report Text of the error, a format string
+         * @param args   Arguments to the format string
+         */
         ConflictException(Action act, String report, Object... args) {
             action = act;
             error = report;
@@ -46,17 +54,17 @@ public class Hoard {
     }
 
     // History of Event reflecting actions played into this hoard since it was created
-    Stack<Event> history;
+    private Stack<Event> mHistory;
 
     // The toolbar of the tree representation of the hoard
-    private Fork tree;
+    private Fork mTree;
 
     /**
      * Construct a new, empty hoard
      */
     public Hoard() {
-        history = new Stack<>();
-        tree = new Fork((String) null); // toolbar node
+        mHistory = new Stack<>();
+        mTree = new Fork(null, this); // root node
     }
 
     /**
@@ -71,13 +79,26 @@ public class Hoard {
             throw new Error("Conflicts during construction");
     }
 
+    public Stack<Event> getHistory() {
+        return mHistory;
+    }
+
     /**
-     * Get the toolbar node of the tree in the hoard
+     * Get the root node of the tree in the hoard
      *
      * @return the tree toolbar
      */
     public Fork getRoot() {
-        return tree;
+        return mTree;
+    }
+
+    /**
+     * Get the parent node of the given node in the hoard
+     *
+     * @return the tree toolbar
+     */
+    public Fork getParentOf(HoardNode node) {
+        return mTree.getParentOf(node);
     }
 
     /**
@@ -105,8 +126,8 @@ public class Hoard {
      * @return the events removed
      */
     public Stack<Event> clearHistory() {
-        Stack<Event> events = history;
-        history = new Stack<>();
+        Stack<Event> events = mHistory;
+        mHistory = new Stack<>();
         return events;
     }
 
@@ -114,7 +135,7 @@ public class Hoard {
      * Record an action and its undo
      */
     private void recordEvent(Action redo, Action undo) {
-        history.add(new Event(redo, undo));
+        mHistory.add(new Event(redo, undo));
     }
 
     /**
@@ -123,7 +144,7 @@ public class Hoard {
      * @return true if a save is needed
      */
     public boolean requiresSave() {
-        return history.size() > 0;
+        return mHistory.size() > 0;
     }
 
     /**
@@ -132,7 +153,7 @@ public class Hoard {
      * @throws ConflictException if something goes wrong
      */
     public void undo() throws ConflictException {
-        Event a = history.pop();
+        Event a = mHistory.pop();
 
         // Replay the reverse of the action
         playAction(a.undo, false);
@@ -142,7 +163,7 @@ public class Hoard {
      * Return true if there is at least one undoable operation
      */
     public int canUndo() {
-        return history.size();
+        return mHistory.size();
     }
 
     /**
@@ -170,41 +191,43 @@ public class Hoard {
         if (action.path.size() == 0)
             throw new ConflictException(action, "Internal error: Zero length path");
 
-        HoardNode node = tree.getByPath(action.path.parent());
+        HoardNode actionNode = mTree.getByPath(action.path.parent());
 
         // HPath must always point to a valid parent Fork pre-existing
         // in the tree. parent will never be null
-        if (node == null)
+        if (actionNode == null)
             throw new ConflictException(action, "parent '%s' was not found", action.path.parent());
-        if (!(node instanceof Fork))
+        if (!(actionNode instanceof Fork))
             throw new ConflictException(action, "parent '%s' is not a folder", action.path.parent());
-        Fork parent = (Fork) node;
 
-        String name = action.path.get(action.path.size() - 1);
+        Fork actionNodeParent = (Fork) actionNode;
+        Fork actionNodeNewParent = null;
+
+        String actionNodeName = action.path.get(action.path.size() - 1);
         // HoardNode may be undefined e.g. if we are creating
-        node = parent.getChildByName(name);
+        actionNode = actionNodeParent.getChildByName(actionNodeName);
         Leaf leaf;
 
         if (action.type == Action.NEW) { // New
-            if (node != null)
+            if (actionNode != null)
                 // This is not really an error, we can survive it
                 // easily enough. However if we don't signal a
                 // conflict, the tree will be told to create a duplicate
                 // node, which it mustn't do.
-                throw new ConflictException(action, "it was already created @ %s", new Date(node.time));
+                throw new ConflictException(action, "it was already created @ %s", new Date(actionNode.getTime()));
 
             if (undoable)
-                recordEvent(action, new Action(Action.DELETE, action.path, parent.time));
+                recordEvent(action, new Action(Action.DELETE, action.path, actionNodeParent.getTime()));
 
-            HoardNode child;
-            if (action.data != null)
-                child = new Leaf(name, action.data);
+            if (action.data == null)
+                actionNode = new Fork(actionNodeName, this);
             else
-                child = new Fork(name);
-            child.time = action.time;
-            parent.addChild(child);
-            if (parent.time < action.time)
-                parent.time = action.time;
+                actionNode = new Leaf(actionNodeName, this, action.data);
+
+            actionNode.setTime(action.time);
+            actionNodeParent.addChild(actionNode);
+            if (actionNodeParent.getTime() < action.time)
+                actionNodeParent.setTime(action.time);
 
         } else if (action.type == Action.INSERT) { // Insert
             if (undoable)
@@ -214,122 +237,124 @@ public class Hoard {
             try {
                 JSONObject job = new JSONObject(action.data);
                 if (job.get("data") instanceof JSONObject)
-                    parent.addChild(new Fork(name, job));
+                    actionNode = new Fork(actionNodeName, this, job);
                 else
-                    parent.addChild(new Leaf(name, job));
+                    actionNode = new Leaf(actionNodeName, this, job);
             } catch (JSONException je) {
-                parent.addChild(new Leaf(null, action.data));
+                actionNode = new Leaf(null, this, action.data);
             }
+            actionNodeParent.addChild(actionNode);
 
-            if (parent.time < action.time)
-                parent.time = action.time;
+            if (actionNodeParent.getTime() < action.time)
+                actionNodeParent.setTime(action.time);
 
         } else { // all other actions require an existing node
-            if (node == null)
+            if (actionNode == null)
                 throw new ConflictException(action, "it does not exist");
-            Fork new_parent;
 
             switch (action.type) {
 
-                case Action.DELETE: // Delete
+                case Action.DELETE: // Delete, action path is node being deleted
                     if (undoable) {
-                        recordEvent(action, new Action(Action.INSERT, action.path, parent.time, node.toJSON().toString()));
+                        recordEvent(action, new Action(Action.INSERT, action.path, actionNodeParent.getTime(), actionNode.toJSON().toString()));
                     }
-                    parent.removeChild(parent.getChildByName(name));
-                    if (parent.time < action.time)
-                        parent.time = action.time;
+                    if (actionNodeParent.getChildByName(actionNodeName) != actionNode)
+                        throw new Error("Unexpected");
+                    actionNodeParent.removeChild(actionNode);
+                    if (actionNodeParent.getTime() < action.time)
+                        actionNodeParent.setTime(action.time);
                     break;
 
                 case Action.EDIT: // Edit
-                    if (!(node instanceof Leaf))
+                    if (!(actionNode instanceof Leaf))
                         throw new ConflictException(action, "cannot edit a folder");
-                    leaf = (Leaf) node;
+                    leaf = (Leaf) actionNode;
                     if (undoable)
-                        recordEvent(action, new Action(Action.EDIT, action.path, node.time, leaf.getData()));
+                        recordEvent(action, new Action(Action.EDIT, action.path, actionNode.getTime(), leaf.getData()));
                     leaf.setData(action.data);
-                    if (leaf.time < action.time)
-                        leaf.time = action.time;
+                    if (leaf.getTime() < action.time)
+                        leaf.setTime(action.time);
                     break;
 
                 case Action.MOVE: // Move to another parent
                     // action.data is the path of the new parent
                     HPath new_parent_path = new HPath(action.data);
-                    new_parent = (Fork) tree.getByPath(new_parent_path);
-                    if (new_parent == null)
+                    actionNodeNewParent = (Fork) mTree.getByPath(new_parent_path);
+                    if (actionNodeNewParent == null)
                         throw new ConflictException(action, "target folder '%s' does not exist", action.data);
 
-                    if (new_parent.getChildByName(name) != null)
+                    if (actionNodeNewParent.getChildByName(actionNodeName) != null)
                         throw new ConflictException(action, "it already exists");
 
                     if (undoable) {
                         // Undo moves the node back to the original parent
                         HPath from_parent = new HPath(action.path).parent();
-                        Action undo = new Action(Action.MOVE, new_parent_path.with(name), parent.time, from_parent.toString());
+                        Action undo = new Action(Action.MOVE, new_parent_path.with(actionNodeName), actionNodeParent.getTime(), from_parent.toString());
                         recordEvent(action, undo);
                     }
 
-                    parent.removeChild(parent.getChildByName(name));
-                    if (parent.time < action.time)
-                        parent.time = action.time;
+                    actionNodeParent.removeChild(actionNodeParent.getChildByName(actionNodeName));
+                    if (actionNodeParent.getTime() < action.time)
+                        actionNodeParent.setTime(action.time);
 
-                    new_parent.addChild(node);
-                    if (new_parent.time < action.time)
-                        new_parent.time = action.time;
+                    actionNodeNewParent.addChild(actionNode);
+                    if (actionNodeNewParent.getTime() < action.time)
+                        actionNodeNewParent.setTime(action.time);
                     break;
 
                 case Action.RENAME: // Rename
                     String new_name = action.data;
-                    if (parent.getChildByName(new_name) != null)
+                    if (actionNodeParent.getChildByName(new_name) != null)
                         throw new ConflictException(action, "it already exists");
                     if (undoable) {
                         HPath p = new HPath(action.path);
                         p.remove(p.size() - 1);
                         p.add(new_name);
-                        recordEvent(action, new Action(Action.RENAME, p, parent.time, name));
+                        recordEvent(action, new Action(Action.RENAME, p, actionNodeParent.getTime(), actionNodeName));
                     }
-                    parent.removeChild(node);
-                    node.name = new_name;
-                    node.time = action.time;
-                    parent.addChild(node);
+                    actionNodeParent.removeChild(actionNode);
+                    actionNode.setName(new_name);
+                    actionNode.setTime(action.time);
+                    actionNodeParent.addChild(actionNode);
                     break;
 
                 case Action.SET_ALARM:
                     if (undoable) {
-                        if (node.mAlarm == null)
+                        if (actionNode.getAlarm() == null)
                             // Undo by cancelling the new alarm
-                            recordEvent(action, new Action(Action.CANCEL_ALARM, action.path, parent.time, name));
+                            recordEvent(action, new Action(Action.CANCEL_ALARM, action.path, actionNodeParent.getTime(), actionNodeName));
                         else
-                            recordEvent(action, new Action(Action.SET_ALARM, action.path, parent.time, node.mAlarm.toJSON().toString()));
+                            recordEvent(action, new Action(Action.SET_ALARM, action.path, actionNodeParent.getTime(), actionNode.getAlarm().toJSON().toString()));
                     }
                     if (action.data == null)
-                        node.mAlarm = null;
+                        actionNode.setAlarm(null);
                     else {
                         try {
-                            node.mAlarm = new Alarm(new JSONObject(action.data));
+                            actionNode.setAlarm(new Alarm(new JSONObject(action.data)));
                         } catch (JSONException je) {
                             throw new ConflictException(action, je.getMessage());
                         }
                     }
-                    node.time = action.time;
+                    actionNode.setTime(action.time);
                     break;
 
                 case Action.CANCEL_ALARM:
                     // Never generated, same as a set with null data
                     if (undoable)
-                        recordEvent(action, new Action(Action.SET_ALARM, action.path, parent.time, node.mAlarm.toJSON().toString()));
-                    node.mAlarm = null;
-                    node.time = action.time;
+                        recordEvent(action, new Action(Action.SET_ALARM, action.path, actionNodeParent.getTime(), actionNode.getAlarm().toJSON().toString()));
+                    actionNode.setAlarm(null);
+                    actionNode.setTime(action.time);
                     break;
 
                 case Action.CONSTRAIN:
-                    if (!(node instanceof Leaf))
+                    if (!(actionNode instanceof Leaf))
                         throw new Error("Cannot constrain non-leaf node");
-                    leaf = (Leaf) node;
+                    leaf = (Leaf) actionNode;
                     if (undoable) {
                         if (leaf.getConstraints() != null)
-                            recordEvent(action, new Action(Action.CONSTRAIN, action.path, parent.time, leaf.getConstraints().toJSON().toString()));
+                            recordEvent(action, new Action(Action.CONSTRAIN, action.path, actionNodeParent.getTime(), leaf.getConstraints().toJSON().toString()));
                         else
-                            recordEvent(action, new Action(Action.CONSTRAIN, action.path, parent.time, null));
+                            recordEvent(action, new Action(Action.CONSTRAIN, action.path, actionNodeParent.getTime(), null));
                     }
                     if (action.data == null)
                         leaf.setConstraints(null);
@@ -345,7 +370,7 @@ public class Hoard {
                             }
                         }
                     }
-                    node.time = action.time;
+                    actionNode.setTime(action.time);
                     break;
                 default:
                     // Version incompatibility?
@@ -355,7 +380,7 @@ public class Hoard {
 
         // Notify listeners
         for (ChangeListener listener : mListeners)
-            listener.actionPlayed(action);
+            listener.actionPlayed(action, actionNodeParent, actionNode, actionNodeNewParent);
     }
 
     /**
@@ -364,7 +389,7 @@ public class Hoard {
      * @return an array of actions
      */
     public List<Action> actionsToCreate() {
-        return tree.actionsToCreate();
+        return mTree.actionsToCreate();
     }
 
     /**
@@ -373,7 +398,7 @@ public class Hoard {
      * @see HoardNode .diff(HPath, HoardNode, HoardNode.DiffReporter)
      */
     public void diff(Hoard b, HoardNode.DiffReporter differ) {
-        tree.diff(new HPath(), b.tree, differ);
+        mTree.diff(new HPath(), b.mTree, differ);
     }
 
     /**
@@ -383,7 +408,7 @@ public class Hoard {
      * @return a tree node, or null if not found.
      */
     public HoardNode getNode(HPath path) {
-        return tree.getByPath(path);
+        return mTree.getByPath(path);
     }
 
     /**
@@ -392,8 +417,8 @@ public class Hoard {
      * @param node the node to find
      * @return the path, or null if the node is not found in the tree.
      */
-    public HPath getPath(HoardNode node) {
-        return tree.getPath(node, new HPath());
+    public HPath getPathOf(HoardNode node) {
+        return mTree.makePath(node, new HPath());
     }
 
     /**
@@ -402,19 +427,21 @@ public class Hoard {
      *
      * @param now    the "current" time
      * @param ringfn function([], Date)
-     * @return a promise that resolves to the number of changes that need
-     * to be saved
      */
     public void checkAlarms(long now, Alarm.Ringer ringfn) {
-        tree.checkAlarms(new HPath(), now, ringfn);
+        mTree.checkAlarms(new HPath(), now, ringfn);
     }
 
     public interface ChangeListener {
         /**
          * Invoked when an action is played
+         *
+         * @param act       the action being played
+         * @param parent    parent of node (or old parent, if the node was moved
+         * @param node      affected node
+         * @param newParent new parent node, if action is MOVE, null otherwise
          */
-        void actionPlayed(Action act);
-
+        void actionPlayed(Action act, HoardNode parent, HoardNode node, HoardNode newParent);
     }
 
     List<ChangeListener> mListeners = new ArrayList<>();
@@ -422,5 +449,13 @@ public class Hoard {
     public void addChangeListener(ChangeListener listener) {
         if (mListeners.indexOf(listener) == -1)
             mListeners.add(listener);
+    }
+
+    public void removeChangeListener(ChangeListener listener) {
+        mListeners.remove(listener);
+    }
+
+    public void clearChangeListeners() {
+        mListeners.clear();
     }
 }
