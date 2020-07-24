@@ -14,9 +14,10 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * Implementation of AES encryption using system libraries.
+ * Implementation of AES encryption using Java language libraries. Interoperable with reference
+ * implementation.
  */
-public class AES_SYS extends Aes {
+public class AES_Java extends Aes {
 
     @Override
     byte[] encrypt(byte[] plaintext, String pass, int nBits) {

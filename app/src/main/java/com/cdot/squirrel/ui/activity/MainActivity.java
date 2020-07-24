@@ -7,42 +7,54 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
-import com.cdot.squirrel.hoard.Action;
-import com.cdot.squirrel.hoard.HPath;
 import com.cdot.squirrel.hoard.Hoard;
 import com.cdot.squirrel.ui.R;
 import com.cdot.squirrel.ui.databinding.MainActivityBinding;
 import com.cdot.squirrel.ui.fragment.TreeFragment;
 
-import java.util.Arrays;
-import java.util.List;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class MainActivity extends AppCompatActivity {
     // AppCompatActivity is a subclass of androidx.fragment.app.FragmentActivity
     private static final String TAG = "MainActivity";
-    private Hoard mHoard;
 
     final static long HOUR = 60 * 60 * 1000;
 
-    Action[] test_actiona = new Action[]{
-            new Action(Action.NEW, new HPath("FineDining"), HOUR),
-            new Action(Action.SET_ALARM, new HPath("FineDining"), 3 * HOUR / 2, "{\"due\":1,\"repeat\":1000000}"),
-            new Action(Action.NEW, new HPath("FineDining↘Caviar"), 2 * HOUR),
-            new Action(Action.NEW, new HPath("FineDining↘Caviar↘Salmon"), 3 * HOUR, "Orange Eggs"),
-            new Action(Action.SET_ALARM, new HPath("FineDining↘Caviar↘Salmon"), 3 * HOUR + HOUR / 2, "{\"due\":100000,\"repeat\":1000000}"),
-            new Action(Action.NEW, new HPath("FineDining↘Truffles"), 4 * HOUR)
-    };
-    List<Action> test_actions = Arrays.asList(test_actiona);
+    private String loadTestResource(String name) {
+        ClassLoader classLoader = getClass().getClassLoader();
+        // load from src/test/resources
+        InputStream in = classLoader.getResourceAsStream(name);
+        if (in == null)
+            throw new Error("Could not load " + name);
+        ByteArrayOutputStream ouch = new ByteArrayOutputStream();
+        int ch;
+        try {
+            while ((ch = in.read()) != -1)
+                ouch.write(ch);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return ouch.toString();
+    }
+
+    Hoard mHoard;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        try {
+             mHoard = new Hoard(new JSONObject(loadTestResource("hoard.json")));
+        } catch (JSONException je) {
+            throw new Error("Failed to parse JSON " + je);
+        }
         MainActivityBinding binding = MainActivityBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
-        mHoard = new Hoard(test_actions);
-
         Fragment f = new TreeFragment();
         FragmentTransaction tx = getSupportFragmentManager().beginTransaction();
         tx.replace(R.id.fragment, f, TreeFragment.class.getName()).commit();

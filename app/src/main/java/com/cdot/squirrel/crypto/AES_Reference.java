@@ -3,14 +3,14 @@ package com.cdot.squirrel.crypto;
 import java.util.Date;
 
 /**
- * Implementation of counter-mode AES_V, based on
- * AES_V counter-mode (CTR) implementation in JavaScript (c) Chris Veness 2005-2019  MIT Licence
+ * Reference implementation of counter-mode AES_Reference, based on
+ * AES_Reference counter-mode (CTR) implementation in JavaScript (c) Chris Veness 2005-2019  MIT Licence
  * www.movable-type.co.uk/scripts/aes.html
  *
  * This directly mirrors the Javascript implementation, and is used in testing to ensure
- * interoperability.
+ * interoperability with the Android system implementation (and hence with Javascript)
  */
-public class AES_V extends Aes {
+public class AES_Reference extends Aes {
 
     /**
      * NIST SP 800-38A sets out recommendations for block cipher modes of operation in terms of byte
@@ -75,7 +75,7 @@ public class AES_V extends Aes {
         //nonceMs = nonceSec = nonceRnd = 0x55555555;
 
         byte[] iv = new byte[]{
-                // 16-byte array; blocksize is fixed at 16 for AES_V
+                // 16-byte array; blocksize is fixed at 16 for AES_Reference
                 (byte) (nonceMs & 0xff), (byte) (nonceMs >>> 8 & 0xff),
                 (byte) (nonceRnd & 0xff), (byte) ((nonceRnd >>> 8) & 0xff),
                 (byte) (nonceSec & 0xff), (byte) ((nonceSec >>> 8) & 0xff),

@@ -13,14 +13,14 @@ import java.util.Date;
 import java.util.List;
 
 public class Action implements JSONable {
-    public static final char NEW = 'N';
-    public static final char DELETE = 'D';
-    public static final char INSERT = 'I';
-    public static final char EDIT = 'E';
-    public static final char MOVE = 'M';
-    public static final char RENAME = 'R';
     public static final char SET_ALARM = 'A';
     public static final char CANCEL_ALARM = 'C';
+    public static final char DELETE = 'D';
+    public static final char EDIT = 'E';
+    public static final char INSERT = 'I';
+    public static final char MOVE = 'M';
+    public static final char NEW = 'N';
+    public static final char RENAME = 'R';
     public static final char CONSTRAIN = 'X';
 
     public HPath path;
@@ -68,7 +68,8 @@ public class Action implements JSONable {
      * @param type action type
      * @param path node path
      * @param data associated data
-     */    public Action(char type, HPath path, String data) {
+     */
+    public Action(char type, HPath path, String data) {
         this(type, path);
         this.data = data;
     }

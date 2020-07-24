@@ -1,5 +1,6 @@
 package com.cdot.squirrel.hoard;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -68,6 +69,28 @@ public class Hoard {
     }
 
     /**
+     * Construct a hoard using JSON data
+     */
+    public Hoard(JSONObject job) {
+        this();
+        if (job.has("actions")) {
+            try {
+                JSONArray jarr = job.getJSONArray("actions");
+                for (int i = 0; i < jarr.length(); i++) {
+                    JSONObject ja = jarr.getJSONObject(i);
+                    playAction(new Action(ja), false);
+                }
+            } catch (JSONException je) {
+                throw new Error("JSON exception during construction " + je);
+            } catch (ConflictException ce) {
+                ce.printStackTrace();
+                throw new Error("Conflict during construction " + ce);
+            }
+        } else
+            throw new Error("Unsupported hoard format");
+    }
+
+    /**
      * Construct from a list of actions. Actions are NOT recorded in the history
      *
      * @param actions list to construct from
@@ -76,7 +99,7 @@ public class Hoard {
         this();
         List<ConflictException> e = playActions(actions, false);
         if (e.size() > 0)
-            throw new Error("Conflicts during construction");
+            throw new Error("Conflicts during construction " + e);
     }
 
     public Stack<Event> getHistory() {

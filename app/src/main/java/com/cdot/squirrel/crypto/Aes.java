@@ -1,16 +1,19 @@
 package com.cdot.squirrel.crypto;
 
+import android.os.Build;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 
 /**
- * Basic AES_V support, based on
- *  * AES_V counter-mode (CTR) implementation in JavaScript (c) Chris Veness 2005-2019  MIT Licence
+ * Basic AES_Reference support, based on
+ *  * AES_Reference counter-mode (CTR) implementation in JavaScript (c) Chris Veness 2005-2019  MIT Licence
  *  * www.movable-type.co.uk/scripts/aes.html
  */
 public abstract class Aes {
 
-    static final int BLOCK_SIZE = 16; // block size fixed at 16 bytes / 128 bits (Nb=4) for AES_V
+    static final int BLOCK_SIZE = 16; // block size fixed at 16 bytes / 128 bits (Nb=4) for AES_Reference
 
     // sBox is pre-computed multiplicative inverse in GF(2^8) used in subBytes and keyExpansion [§5.1.1]
     private static final int[] iS_BOX = new int[]{
@@ -58,7 +61,7 @@ public abstract class Aes {
     }
 
     /**
-     * AES_V Cipher function: encrypt 'input' state with Rijndael algorithm [§5.1];
+     * AES_Reference Cipher function: encrypt 'input' state with Rijndael algorithm [§5.1];
      * applies Nr rounds (10/12/14) using key schedule w for 'add round key' stage.
      *
      * @param input - 16-byte (128-bit) input state array.
@@ -66,7 +69,7 @@ public abstract class Aes {
      * @return Encrypted output state array.
      */
     static byte[] cipher(byte[] input, byte[][] w) {
-        int Nb = 4; // block size (in words): no of columns in state (fixed at 4 for AES_V)
+        int Nb = 4; // block size (in words): no of columns in state (fixed at 4 for AES_Reference)
         int Nr = w.length / Nb - 1; // no of rounds: 10/12/14 for 128/192/256-bit keys
 
         byte[][] state = new byte[][]{new byte[4], new byte[4], new byte[4], new byte[4]}; // initialise 4xNb byte-array 'state' with input [§3.4]
@@ -99,7 +102,7 @@ public abstract class Aes {
      * @return Expanded key schedule as 2D byte-array (Nr+1 x Nb bytes).
      */
     static byte[][] keyExpansion(byte[] key) {
-        int Nb = 4; // block size (in words): no of columns in state (fixed at 4 for AES_V)
+        int Nb = 4; // block size (in words): no of columns in state (fixed at 4 for AES_Reference)
         int Nk = key.length / 4; // key length (in words): 4/6/8 for 128/192/256-bit keys
         int Nr = Nk + 6; // no of rounds: 10/12/14 for 128/192/256-bit keys
 
@@ -171,7 +174,7 @@ public abstract class Aes {
             for (int c = 0; c < 4; c++) t[c] = s[r][(c + r) % Nb]; // shift into temp copy
             //for (int c = 0; c < 4; c++) s[r][c] = t[c]; // and copy back
             System.arraycopy(t, 0, s[r], 0, 4); // and copy back
-        } // note that this will work for Nb=4,5,6, but not 7,8 (always 4 for AES_V):
+        } // note that this will work for Nb=4,5,6, but not 7,8 (always 4 for AES_Reference):
     }
 
     /**
@@ -246,7 +249,7 @@ public abstract class Aes {
     abstract byte[] encrypt(byte[] plaintextBytes, String password, int nBits);
 
     /**
-     * Encrypt a string using AES_V in Counter mode, returning a string.
+     * Encrypt a string using AES_Reference in Counter mode, returning a string.
      *
      * @param plaintext Source to be encrypted.
      * @param password  The password to use to generate a key.
@@ -257,11 +260,15 @@ public abstract class Aes {
     String encrypt(String plaintext, String password, int nBits) {
         byte[] ciphertextBytes = encrypt(plaintext.getBytes(), password, nBits);
         // base-64 encode ciphertext
-        return android.util.Base64.encodeToString(ciphertextBytes, android.util.Base64.DEFAULT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O || Build.VERSION.SDK_INT == 0) {
+            byte[] bytes = Base64.getEncoder().encode(ciphertextBytes);
+            return new String(bytes);
+        } else
+            return android.util.Base64.encodeToString(ciphertextBytes, android.util.Base64.DEFAULT);
     }
 
     /**
-     * Decrypt a string using AES_V in counter mode
+     * Decrypt a string using AES_Reference in counter mode
      *
      * @param ciphertext Source to be decrypted.
      * @param password   The password to use to generate the key.
@@ -269,7 +276,11 @@ public abstract class Aes {
      * @return Decrypted data
      */
     String decrypt(String ciphertext, String password, int nBits) {
-        byte[] ciphertextBytes = android.util.Base64.decode(ciphertext, android.util.Base64.DEFAULT);
+        byte[] ciphertextBytes;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O || Build.VERSION.SDK_INT == 0)
+            ciphertextBytes = Base64.getDecoder().decode(ciphertext);
+        else
+            ciphertextBytes = android.util.Base64.decode(ciphertext, android.util.Base64.DEFAULT);
 
         byte[] plaintextBytes = decrypt(ciphertextBytes, password, nBits);
         // decode from UTF8 back to Unicode multi-byte chars
